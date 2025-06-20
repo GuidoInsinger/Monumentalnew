@@ -1,9 +1,8 @@
+from dataclasses import dataclass, field
 from typing import Annotated, Literal, cast
 
 import numpy as np
 import numpy.typing as npt
-
-from utils import dataclass
 
 
 @dataclass
@@ -16,6 +15,16 @@ class StateVector:
     al: np.floating
     ar: np.floating
 
+    vec: Annotated[npt.NDArray[np.floating], Literal["N"]] = field(init=False)
+
+    def __post_init__(self):
+        self.vec = np.array(
+            [self.x, self.y, self.theta, self.vl, self.vr, self.al, self.ar]
+        )
+
+    def __add__(self, meas2):
+        return StateVector(*(self.vec - meas2.vec))
+
 
 @dataclass
 class Measurement:
@@ -25,19 +34,15 @@ class Measurement:
     x_gps: np.floating
     y_gps: np.floating
 
-    
+    vec: Annotated[npt.NDArray[np.floating], Literal["M"]] = field(init=False)
 
-    def __sub__(self, meas1, meas2):
-        return Measurement(
-            meas2.ax - meas1.ax,
-            meas2.ay - meas1.ay,
-            meas2.omega_gyro - meas1.omega_gyro,
-            meas2.x_gps - meas1.x_gps,
-            meas2.y_gps - meas1.y_gps,
+    def __post_init__(self):
+        self.vec = np.array(
+            [self.a_x, self.a_y, self.omega_gyro, self.x_gps, self.y_gps]
         )
 
-    def __post_init__(self, )
-
+    def __sub__(self, meas2):
+        return Measurement(*(self.vec - meas2.vec))
 
 
 @dataclass
@@ -119,8 +124,8 @@ class EKF:
                 [0.0, 0.0, 1.0, -dt / self.robot.L, dt / self.robot.L, 0.0, 0.0],
                 [0.0, 0.0, 0.0, 1.0, 0.0, state.al * dt, 0.0],
                 [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, state.ar * dt],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             ]
         )
         cov_prior = F @ self.P @ F.T + self.Q
@@ -140,8 +145,8 @@ class EKF:
         y_gps_pred = state_prior.y
 
         z_pred = Measurement(
-            ax=ax_pred,
-            ay=ay_pred,
+            a_x=ax_pred,
+            a_y=ay_pred,
             omega_gyro=omega_gyro_pred,
             x_gps=x_gps_pred,
             y_gps=y_gps_pred,
@@ -188,8 +193,27 @@ class EKF:
             ]
         )
 
-        y_hat = z-z_pred
-        S = H @ cov_prior @ H + self.R
+        y_hat = z - z_pred
+        S = H @ cov_prior @ H.T + self.R
         K = cov_prior @ H.T @ np.linalg.inv(S)
-        state_new = state_prior + K @ y_hat
-        self.cov = (np.eye(len(x_prior)) - K_current @ H_current) @ cov_prior
+
+        state_new = state_prior + StateVector(*(K @ y_hat.vec))
+        self.P = (np.eye(len(state_new)) - K @ H.T) @ cov_prior
+
+        return state_new
+
+
+if __name__ == "__main__":
+    robot = Robot(L=0.5, epsilon=0.1)
+    P0 = np.random.normal(loc=0.3, scale=2.5, size=(7, 7))
+    Q = np.random.normal(loc=0.3, scale=2.5, size=(7, 7))
+    R = np.random.normal(loc=0.3, scale=2.5, size=(5, 5))
+    ekf = EKF(robot=robot, P0=P0, Q=Q, R=R)
+
+    x0 = StateVector(*np.random.normal(loc=0.3, scale=2.5, size=(7)))
+    u = Controls(*np.random.normal(loc=0.3, scale=2.5, size=(2)))
+
+    state_prior, cov_prior = ekf.predict(state=x0, controls=u, dt=0.1)
+
+    z = Measurement(*np.random.normal(loc=0.3, scale=2.5, size=(5)))
+    x_new = ekf.update(state_prior=state_prior, cov_prior=cov_prior, z=z)
