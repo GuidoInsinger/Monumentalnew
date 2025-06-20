@@ -1,7 +1,6 @@
-from typing import Annotated, Literal
+from typing import Annotated, Literal, cast
 
 import numpy as np
-from numpy.f2py.auxfuncs import containsderivedtypes
 import numpy.typing as npt
 
 from utils import dataclass
@@ -32,6 +31,7 @@ class Controls:
 @dataclass
 class Robot:
     L: np.floating
+    epsilon: np.floating
 
 class EKF:
     def __init__(
@@ -44,6 +44,7 @@ class EKF:
         R: Annotated[npt.NDArray[np.float64], Literal["M", "M"]],
 
     ) -> None:
+        self.robot = robot
         self.P = P0
         self.Q = Q
         self.R = R
@@ -53,12 +54,26 @@ class EKF:
     ) -> 
         x_pred = state.x + (state.vl+state.vr)*np.cos(state.theta)/2*dt
         y_pred = state.y + (state.vl+state.vr)*np.cos(state.theta)/2*dt
-        theta = state.theta + (-state.vl+state.vr)/self.robot.L*dt
-        vl = state.vl + state.al*dt
-        vr = state.vr + state.ar*dt
-        al = input.v
+        theta_pred = state.theta + (-state.vl+state.vr)/self.robot.L*dt
+        vl_pred = state.vl + state.al*dt
+        vr_pred = state.vr + state.ar*dt
 
-        x_prior = self.f(u=u, dt=dt)
+        delta_vl = controls.v_l_desired - state.vl
+        delta_vr = controls.v_r_desired - state.vr
+
+        al_pred = cast(np.floating, 0.5*np.sign(delta_vl) if delta_vl > self.robot.epsilon else 0.0)
+        ar_pred = cast(np.floating, 0.5*np.sign(delta_vr) if delta_vr > self.robot.epsilon else 0.0)
+
+        x_prior = StateVector(x = x_pred, 
+                              y = y_pred, 
+                              theta = 
+                              theta_pred, 
+                              vl=vl_pred,
+                              vr=vr_pred,
+                              al=al_pred,
+                              ar=ar_pred)
+        
+        F = np.array([[1.0, 0.0, (state.vr+state.vl)*np.sin(state.theta)]])
         cov_prior = F_current @ self.P @ F_current.T + Q_current
 
         return x_prior, cov_prior
