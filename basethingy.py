@@ -25,6 +25,20 @@ class Measurement:
     x_gps: np.floating
     y_gps: np.floating
 
+    
+
+    def __sub__(self, meas1, meas2):
+        return Measurement(
+            meas2.ax - meas1.ax,
+            meas2.ay - meas1.ay,
+            meas2.omega_gyro - meas1.omega_gyro,
+            meas2.x_gps - meas1.x_gps,
+            meas2.y_gps - meas1.y_gps,
+        )
+
+    def __post_init__(self, )
+
+
 
 @dataclass
 class Controls:
@@ -105,6 +119,8 @@ class EKF:
                 [0.0, 0.0, 1.0, -dt / self.robot.L, dt / self.robot.L, 0.0, 0.0],
                 [0.0, 0.0, 0.0, 1.0, 0.0, state.al * dt, 0.0],
                 [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, state.ar * dt],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             ]
         )
         cov_prior = F @ self.P @ F.T + self.Q
@@ -113,15 +129,67 @@ class EKF:
 
     def update(
         self,
-        z: Annotated[npt.NDArray[np.float64], Literal["M"]],
-        x_prior: Annotated[npt.NDArray[np.float64], Literal["N"]],
+        state_prior: StateVector,
         cov_prior: Annotated[npt.NDArray[np.float64], Literal["N", "N"]],
+        z: Measurement,
     ):
-        y_hat = z - self.h(x_prior=x_prior)  #
-        H_current = self.H(x_prior=x_prior)
-        R_current = self.R()
+        ax_pred = (state_prior.al + state_prior.ar) / 2
+        ay_pred = (state_prior.vr**2 - state_prior.vl**2) / 2 * self.robot.L
+        omega_gyro_pred = (state_prior.vr - state_prior.vl) / self.robot.L
+        x_gps_pred = state_prior.x
+        y_gps_pred = state_prior.y
 
-        S_current = H_current @ cov_prior @ H_current.T + R_current
-        K_current = cov_prior @ H_current.T @ np.linalg.inv(S_current)
-        self.x = x_prior + K_current @ y_hat
+        z_pred = Measurement(
+            ax=ax_pred,
+            ay=ay_pred,
+            omega_gyro=omega_gyro_pred,
+            x_gps=x_gps_pred,
+            y_gps=y_gps_pred,
+        )
+        H = np.array(
+            [
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5],
+                [
+                    0.0,
+                    0.0,
+                    0.0,
+                    -state_prior.vl / self.robot.L,
+                    state_prior.vr / self.robot.L,
+                    0.0,
+                    0.0,
+                ],
+                [
+                    0.0,
+                    0.0,
+                    0.0,
+                    -1 / self.robot.L,
+                    1 / self.robot.L,
+                    0.0,
+                    0.0,
+                ],
+                [
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                ],
+                [
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                ],
+            ]
+        )
+
+        y_hat = z-z_pred
+        S = H @ cov_prior @ H + self.R
+        K = cov_prior @ H.T @ np.linalg.inv(S)
+        state_new = state_prior + K @ y_hat
         self.cov = (np.eye(len(x_prior)) - K_current @ H_current) @ cov_prior
