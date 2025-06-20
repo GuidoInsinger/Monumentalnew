@@ -1,0 +1,11 @@
+[project]
+name = "monumentalnew"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.3.0",
+    "rerun-sdk>=0.23.3",
+    "websocket>=0.2.1",
+]
