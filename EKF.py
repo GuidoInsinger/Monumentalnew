@@ -10,12 +10,12 @@ class EKF:
     def __init__(
         self,
         robot: Robot,
-        P0: Annotated[npt.NDArray[np.float64], Literal["N", "N"]],
+        cov0: Annotated[npt.NDArray[np.float64], Literal["N", "N"]],
         Q: Annotated[npt.NDArray[np.float64], Literal["N", "N"]],
         R: Annotated[npt.NDArray[np.float64], Literal["M", "M"]],
     ) -> None:
         self.robot = robot
-        self.P = P0
+        self.cov = cov0
         self.Q = Q
         self.R = R
 
@@ -78,7 +78,7 @@ class EKF:
                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             ]
         )
-        cov_prior = F @ self.P @ F.T + self.Q
+        cov_prior = F @ self.cov @ F.T + self.Q
 
         return x_prior, cov_prior
 
@@ -150,7 +150,7 @@ class EKF:
         print(cov_prior)
 
         state_new = state_prior + StateVector(*(K @ y_hat.vec))
-        self.P = (np.eye(H.shape[1]) - K @ H) @ cov_prior
+        self.cov = (np.eye(H.shape[1]) - K @ H) @ cov_prior
 
         return state_new
 
@@ -173,10 +173,11 @@ if __name__ == "__main__":
     from viz import init_rr, update_rr
 
     robot = Robot(L=0.5, epsilon=2.0)
-    P0 = 10 * np.eye(7)
+    cov0 = 0.1 * np.eye(7)
+
     Q = np.diag([0.1, 0.1, 0.01, 0.3, 0.3, 3, 3])
     R = np.diag([0.1, 0.1, 0.1, 0.05, 0.05])
-    ekf = EKF(robot=robot, P0=P0, Q=Q, R=R)
+    ekf = EKF(robot=robot, cov0=cov0, Q=Q, R=R)
 
     state0 = StateVector(*np.random.normal(loc=0.3, scale=0.1, size=(7)))
     u0 = Controls(*np.random.normal(loc=0.3, scale=0.1, size=(2)))
@@ -191,5 +192,3 @@ if __name__ == "__main__":
         statehist.append(state_new)
         update_rr(statehist, t=time.time() - start)
         time.sleep(0.1)
-
-        # print(statehist[-1])

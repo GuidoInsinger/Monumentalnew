@@ -28,7 +28,7 @@ class StateVector:
             [self.x, self.y, self.theta, self.vl, self.vr, self.al, self.ar]
         )
 
-    def __add__(self, meas2):
+    def __add__(self, meas2: "StateVector"):
         return StateVector(*(self.vec + meas2.vec))
 
 
@@ -48,7 +48,7 @@ class Measurement:
         )
         print(" hi")
 
-    def __sub__(self, meas2):
+    def __sub__(self, meas2: "Measurement"):
         return Measurement(*(self.vec - meas2.vec))
 
 

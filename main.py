@@ -1,5 +1,6 @@
 import json
 import time
+from typing import cast
 
 import numpy as np
 import websocket
@@ -11,7 +12,7 @@ from viz import init_rr, update_rr
 
 class VizualizeEKF(websocket.WebSocketApp):
     def __init__(self):
-        super().__init__(
+        super().__init__(  # type:ignore
             "ws://91.99.103.188:8765",
             on_open=self.on_open,
             on_message=self.on_message,
@@ -22,11 +23,11 @@ class VizualizeEKF(websocket.WebSocketApp):
         state0 = StateVector(*np.array([0.0, 0.0, np.pi / 2, 0.0, 0.0, 0.0, 0.0]))
 
         robot = Robot(L=0.5, epsilon=1.0)
-        P0 = 0.1 * np.random.normal(loc=0.3, scale=2.5, size=(7, 7))
+        cov0 = 0.1 * np.random.normal(loc=0.3, scale=2.5, size=(7, 7))
         Q = np.diag([0.1, 0.1, 0.01, 0.3, 0.3, 0.5, 0.5])
         R = np.diag([0.1, 0.1, 0.1, 0.05, 0.05])
 
-        self.ekf = EKF(robot=robot, P0=P0, Q=Q, R=R)
+        self.ekf = EKF(robot=robot, cov0=cov0, Q=Q, R=R)
         self.start_time = time.time()
 
         self.state_hist: list[StateVector] = [state0]
@@ -52,23 +53,19 @@ class VizualizeEKF(websocket.WebSocketApp):
             gpsdata = sensors[2]["data"]
 
             z = Measurement(
-                float(accdata[0]),
-                float(accdata[1]),
-                float(gyrodata[0]),
-                float(gpsdata[0]),
-                float(gpsdata[1]),
+                cast(np.floating, accdata[0]),
+                cast(np.floating, accdata[1]),
+                cast(np.floating, gyrodata[0]),
+                cast(np.floating, gpsdata[0]),
+                cast(np.floating, (gpsdata[1])),
             )
-            print(z)
+
             u = Controls(*np.array([1.0, 1.0]))
             self.update_ekf(u=u, z=z)
 
-            # elif gpsdata != sensorhistory[-1][3:]:
-            #     print("new!")
-            #     sensorhistory.append([*accdata, *gyrodata, *gpsdata])
-
             inputs = {
-                "v_left": 0.0,
-                "v_right": 0.0,
+                "v_left": u.v_l_desired,
+                "v_right": u.v_r_desired,
             }
             update_rr(self.state_hist, t=time.time() - self.start_time)
             ws.send(json.dumps(inputs))
