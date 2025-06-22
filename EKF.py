@@ -1,60 +1,9 @@
-from dataclasses import dataclass, field
 from typing import Annotated, Literal, cast
 
 import numpy as np
 import numpy.typing as npt
 
-
-@dataclass
-class StateVector:
-    x: np.floating
-    y: np.floating
-    theta: np.floating
-    vl: np.floating
-    vr: np.floating
-    al: np.floating
-    ar: np.floating
-
-    vec: Annotated[npt.NDArray[np.floating], Literal["N"]] = field(init=False)
-
-    def __post_init__(self):
-        self.vec = np.array(
-            [self.x, self.y, self.theta, self.vl, self.vr, self.al, self.ar]
-        )
-
-    def __add__(self, meas2):
-        return StateVector(*(self.vec - meas2.vec))
-
-
-@dataclass
-class Measurement:
-    a_x: np.floating
-    a_y: np.floating
-    omega_gyro: np.floating
-    x_gps: np.floating
-    y_gps: np.floating
-
-    vec: Annotated[npt.NDArray[np.floating], Literal["M"]] = field(init=False)
-
-    def __post_init__(self):
-        self.vec = np.array(
-            [self.a_x, self.a_y, self.omega_gyro, self.x_gps, self.y_gps]
-        )
-
-    def __sub__(self, meas2):
-        return Measurement(*(self.vec - meas2.vec))
-
-
-@dataclass
-class Controls:
-    v_l_desired: np.floating
-    v_r_desired: np.floating
-
-
-@dataclass
-class Robot:
-    L: np.floating
-    epsilon: np.floating
+from utils import Controls, Measurement, Robot, StateVector
 
 
 class EKF:
@@ -74,10 +23,11 @@ class EKF:
         self, state: StateVector, controls: Controls, dt: float
     ) -> tuple[StateVector, Annotated[npt.NDArray[np.float64], Literal["N", "N"]]]:
         x_pred = state.x + (state.vl + state.vr) * np.cos(state.theta) / 2 * dt
-        y_pred = state.y + (state.vl + state.vr) * np.cos(state.theta) / 2 * dt
+        y_pred = state.y + (state.vl + state.vr) * np.sin(state.theta) / 2 * dt
         theta_pred = state.theta + (-state.vl + state.vr) / self.robot.L * dt
-        vl_pred = state.vl + state.al * dt
-        vr_pred = state.vr + state.ar * dt
+
+        vl_pred = np.clip(state.vl + state.al * dt, -2.0, 2.0)
+        vr_pred = np.clip(state.vr + state.ar * dt, -2.0, 2.0)
 
         delta_vl = controls.v_l_desired - state.vl
         delta_vr = controls.v_r_desired - state.vr
@@ -122,10 +72,10 @@ class EKF:
                     0.0,
                 ],
                 [0.0, 0.0, 1.0, -dt / self.robot.L, dt / self.robot.L, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 1.0, 0.0, state.al * dt, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, state.ar * dt],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0, 0.0, dt, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, dt],
+                [0.0, 0.0, 0.0, -0.3, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, -0.3, 0.0, 0.0],
             ]
         )
         cov_prior = F @ self.P @ F.T + self.Q
@@ -139,7 +89,7 @@ class EKF:
         z: Measurement,
     ):
         ax_pred = (state_prior.al + state_prior.ar) / 2
-        ay_pred = (state_prior.vr**2 - state_prior.vl**2) / 2 * self.robot.L
+        ay_pred = (state_prior.vr**2 - state_prior.vl**2) / (2 * self.robot.L)
         omega_gyro_pred = (state_prior.vr - state_prior.vl) / self.robot.L
         x_gps_pred = state_prior.x
         y_gps_pred = state_prior.y
@@ -197,23 +147,49 @@ class EKF:
         S = H @ cov_prior @ H.T + self.R
         K = cov_prior @ H.T @ np.linalg.inv(S)
 
+        print(cov_prior)
+
         state_new = state_prior + StateVector(*(K @ y_hat.vec))
-        self.P = (np.eye(len(state_new)) - K @ H.T) @ cov_prior
+        self.P = (np.eye(H.shape[1]) - K @ H) @ cov_prior
 
         return state_new
 
 
+def gerono(t: np.floating) -> tuple[float, float]:
+    if t < 20:
+        k = np.pi * t / 10 - np.pi / 2
+    else:
+        k = 3 * np.pi / 2
+
+    x = -2 * np.sin(k) * np.cos(k)
+    y = 2 * (np.sin(k) + 1)
+
+    return x, y
+
+
 if __name__ == "__main__":
-    robot = Robot(L=0.5, epsilon=0.1)
-    P0 = np.random.normal(loc=0.3, scale=2.5, size=(7, 7))
-    Q = np.random.normal(loc=0.3, scale=2.5, size=(7, 7))
-    R = np.random.normal(loc=0.3, scale=2.5, size=(5, 5))
+    import time
+
+    from viz import init_rr, update_rr
+
+    robot = Robot(L=0.5, epsilon=2.0)
+    P0 = 10 * np.eye(7)
+    Q = np.diag([0.1, 0.1, 0.01, 0.3, 0.3, 3, 3])
+    R = np.diag([0.1, 0.1, 0.1, 0.05, 0.05])
     ekf = EKF(robot=robot, P0=P0, Q=Q, R=R)
 
-    x0 = StateVector(*np.random.normal(loc=0.3, scale=2.5, size=(7)))
-    u = Controls(*np.random.normal(loc=0.3, scale=2.5, size=(2)))
+    state0 = StateVector(*np.random.normal(loc=0.3, scale=0.1, size=(7)))
+    u0 = Controls(*np.random.normal(loc=0.3, scale=0.1, size=(2)))
 
-    state_prior, cov_prior = ekf.predict(state=x0, controls=u, dt=0.1)
+    start = time.time()
+    statehist: list[StateVector] = [state0]
+    init_rr()
+    while time.time() - start < 1:
+        state_prior, cov_prior = ekf.predict(state=statehist[-1], controls=u0, dt=0.1)
+        z = Measurement(*np.random.normal(loc=0.3, scale=2.5, size=(5)))
+        state_new = ekf.update(state_prior=state_prior, cov_prior=cov_prior, z=z)
+        statehist.append(state_new)
+        update_rr(statehist, t=time.time() - start)
+        time.sleep(0.1)
 
-    z = Measurement(*np.random.normal(loc=0.3, scale=2.5, size=(5)))
-    x_new = ekf.update(state_prior=state_prior, cov_prior=cov_prior, z=z)
+        # print(statehist[-1])
