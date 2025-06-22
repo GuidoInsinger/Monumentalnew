@@ -74,8 +74,8 @@ class EKF:
                 [0.0, 0.0, 1.0, -dt / self.robot.L, dt / self.robot.L, 0.0, 0.0],
                 [0.0, 0.0, 0.0, 1.0, 0.0, dt, 0.0],
                 [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, dt],
-                [0.0, 0.0, 0.0, -0.3, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, -0.3, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             ]
         )
         cov_prior = F @ self.P @ F.T + self.Q
@@ -184,7 +184,7 @@ if __name__ == "__main__":
     start = time.time()
     statehist: list[StateVector] = [state0]
     init_rr()
-    while time.time() - start < 1:
+    while time.time() - start < 10:
         state_prior, cov_prior = ekf.predict(state=statehist[-1], controls=u0, dt=0.1)
         z = Measurement(*np.random.normal(loc=0.3, scale=2.5, size=(5)))
         state_new = ekf.update(state_prior=state_prior, cov_prior=cov_prior, z=z)

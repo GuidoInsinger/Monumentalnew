@@ -29,7 +29,7 @@ class StateVector:
         )
 
     def __add__(self, meas2):
-        return StateVector(*(self.vec - meas2.vec))
+        return StateVector(*(self.vec + meas2.vec))
 
 
 @dataclass
@@ -60,5 +60,5 @@ class Controls:
 
 @dataclass
 class Robot:
-    L: np.floating
-    epsilon: np.floating
+    L: float
+    epsilon: float
