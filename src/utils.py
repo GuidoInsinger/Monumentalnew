@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -37,19 +37,46 @@ class Measurement:
     a_x: np.floating
     a_y: np.floating
     omega_gyro: np.floating
-    x_gps: np.floating
-    y_gps: np.floating
+    x_gps: Optional[np.floating]
+    y_gps: Optional[np.floating]
 
     vec: Annotated[npt.NDArray[np.floating], Literal["M"]] = field(init=False)
 
     def __post_init__(self):
-        self.vec = np.array(
-            [self.a_x, self.a_y, self.omega_gyro, self.x_gps, self.y_gps]
-        )
-        print(" hi")
+        if (self.x_gps is None) and (self.y_gps is None):
+            self.vec = np.array(
+                [
+                    self.a_x,
+                    self.a_y,
+                    self.omega_gyro,
+                ]
+            )
+        else:
+            try:
+                self.vec = np.array(
+                    [self.a_x, self.a_y, self.omega_gyro, self.x_gps, self.y_gps]
+                )
+            except Exception as ex:
+                print(ex)
+
+    def __len__(self):
+        return len(self.vec)
 
     def __sub__(self, meas2: "Measurement"):
-        return Measurement(*(self.vec - meas2.vec))
+        if len(self) != len(meas2):
+            raise Exception("Cannot subtract measurements of differing size")
+
+        if (self.x_gps is not None) and (self.y_gps is not None):
+            return Measurement(*(self.vec - meas2.vec))
+
+        else:
+            return Measurement(
+                a_x=self.a_x - meas2.a_x,
+                a_y=self.a_y - meas2.a_y,
+                omega_gyro=self.omega_gyro - meas2.omega_gyro,
+                x_gps=None,
+                y_gps=None,
+            )
 
 
 @dataclass

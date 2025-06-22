@@ -3,7 +3,7 @@ from typing import Annotated, Literal, cast
 import numpy as np
 import numpy.typing as npt
 
-from utils import Controls, Measurement, Robot, StateVector
+from .utils import Controls, Measurement, Robot, StateVector
 
 
 class EKF:
@@ -74,8 +74,8 @@ class EKF:
                 [0.0, 0.0, 1.0, -dt / self.robot.L, dt / self.robot.L, 0.0, 0.0],
                 [0.0, 0.0, 0.0, 1.0, 0.0, dt, 0.0],
                 [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, dt],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
             ]
         )
         cov_prior = F @ self.cov @ F.T + self.Q
@@ -101,6 +101,7 @@ class EKF:
             x_gps=x_gps_pred,
             y_gps=y_gps_pred,
         )
+
         H = np.array(
             [
                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5],
@@ -143,11 +144,20 @@ class EKF:
             ]
         )
 
-        y_hat = z - z_pred
-        S = H @ cov_prior @ H.T + self.R
-        K = cov_prior @ H.T @ np.linalg.inv(S)
+        if len(z) == 3:
+            z_pred = Measurement(
+                a_x=z_pred.a_x,
+                a_y=z_pred.a_y,
+                omega_gyro=z_pred.omega_gyro,
+                x_gps=None,
+                y_gps=None,
+            )
+            H = H[:3]  # type:ignore
 
-        print(cov_prior)
+        print(z.vec, z_pred.vec)
+        y_hat = z - z_pred
+        S = H @ cov_prior @ H.T + self.R[: len(z), : len(z)]
+        K = cov_prior @ H.T @ np.linalg.inv(S)
 
         state_new = state_prior + StateVector(*(K @ y_hat.vec))
         self.cov = (np.eye(H.shape[1]) - K @ H) @ cov_prior
@@ -183,8 +193,10 @@ if __name__ == "__main__":
     u0 = Controls(*np.random.normal(loc=0.3, scale=0.1, size=(2)))
 
     start = time.time()
+
     statehist: list[StateVector] = [state0]
     init_rr()
+
     while time.time() - start < 10:
         state_prior, cov_prior = ekf.predict(state=statehist[-1], controls=u0, dt=0.1)
         z = Measurement(*np.random.normal(loc=0.3, scale=2.5, size=(5)))

@@ -2,7 +2,7 @@ import numpy as np
 import rerun as rr
 import rerun.blueprint as rrb
 
-from utils import StateVector
+from .utils import StateVector
 
 
 def init_rr():
