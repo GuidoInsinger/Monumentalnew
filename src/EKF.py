@@ -34,11 +34,11 @@ class EKF:
 
         al_pred = cast(
             np.floating,
-            0.5 * np.sign(delta_vl) if delta_vl > self.robot.epsilon else 0.0,
+            1.0 * np.sign(delta_vl) if delta_vl > self.robot.epsilon else 0.0,
         )
         ar_pred = cast(
             np.floating,
-            0.5 * np.sign(delta_vr) if delta_vr > self.robot.epsilon else 0.0,
+            1.0 * np.sign(delta_vr) if delta_vr > self.robot.epsilon else 0.0,
         )
 
         x_prior = StateVector(
