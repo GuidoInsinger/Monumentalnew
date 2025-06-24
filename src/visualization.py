@@ -4,9 +4,8 @@ import numpy as np
 import rerun as rr
 import rerun.blueprint as rrb
 
-from utils.funcs import gerono
-
 from .robot import Robot
+from .utils.funcs import gerono
 
 
 def init_rr(robot: Robot) -> None:
@@ -19,6 +18,7 @@ def init_rr(robot: Robot) -> None:
             rrb.TimeSeriesView(name="theta EKF", origin="/theta_ekf"),
             rrb.TimeSeriesView(name="v EKF", origin="/v_ekf"),
         ),
+        column_shares=[0.7, 0.3],
     )
 
     rr.send_blueprint(blueprint=blueprint)
@@ -48,16 +48,17 @@ def init_rr(robot: Robot) -> None:
 
 
 def update_rr(robot: Robot, t: float) -> None:
+    sensor_color = [1.0, 0.65, 0.0, 1.0]
     last_state = robot.state_hist[-1]
     rr.set_time("time", duration=t)
     rr.log(
-        "map/goalpoint",
+        "map/goal",
         rr.Arrows3D(
             vectors=np.array([0, 0, -1]),
             origins=np.hstack((gerono(t=t), np.ones(1))),
         ),
     )
-    rr.log(
+    rr.log(  # log
         "map/path",
         rr.LineStrips3D(
             np.array(
@@ -69,30 +70,33 @@ def update_rr(robot: Robot, t: float) -> None:
             ).T,
         ),
     )
-    rr.log(
-        "map/GPS",
+    rr.log(  # log gps position
+        "map/sensors",
         rr.Points3D(
             positions=[np.hstack((gps.vec, np.zeros(1))) for gps in robot.gps_hist],
-            colors=[1.0, 0.65, 0.0, 1.0],
+            colors=sensor_color,
             radii=0.01,
         ),
     )
-    rr.log(
-        "map/accelerometer",
-        rr.Points3D(
-            positions=[np.hstack((gps.vec, np.zeros(1))) for gps in robot.gps_hist],
-            colors=[1.0, 0.65, 0.0, 1.0],
-            radii=0.01,
-        ),
-    )
+
     rr.log(
         "map/box",
         rr.Transform3D(
-            translation=np.array([last_state.x, last_state.y, 0.025]),
+            translation=np.array(
+                [last_state.x, last_state.y, robot.dimensions.r_wheel / 2]
+            ),
             rotation_axis_angle=rr.RotationAxisAngle(
                 axis=np.array([0, 0, 1]),
                 radians=cast(float, last_state.theta),
             ),
+        ),
+    )
+    rr.log(  # log accelerometer vector
+        "map/box",
+        rr.Arrows3D(
+            vectors=np.hstack((robot.inertial_hist[-1].vec, np.zeros(1))),
+            origins=np.zeros(3),
+            colors=sensor_color,
         ),
     )
 

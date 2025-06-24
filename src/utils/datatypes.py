@@ -45,6 +45,11 @@ class InertialMeasurement:
 
     timestamp: pd.Timestamp
 
+    vec: Annotated[npt.NDArray[np.floating], Literal[2]] = field(init=False)
+
+    def __post_init__(self):
+        self.vec = np.array([self.a_x, self.a_y])
+
 
 @dataclass
 class RobotDimensions:

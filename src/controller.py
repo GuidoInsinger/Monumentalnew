@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from utils.datatypes import Controls, StateVector
-from utils.funcs import angle_between_vectors, gerono
+from .utils.datatypes import Controls, StateVector
+from .utils.funcs import angle_between_vectors, gerono
 
 
 @dataclass
