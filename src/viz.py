@@ -59,7 +59,10 @@ def update_rr(
     rr.set_time("time", duration=t)
     rr.log(
         "map/goalpoint",
-        rr.Points3D(positions=np.hstack((gerono(t=t), np.zeros(1))), radii=0.05),
+        rr.Arrows3D(
+            vectors=np.array([0, 0, -1]),
+            origins=np.hstack((gerono(t=t), np.ones(1))),
+        ),
     )
     rr.log(
         "map/path",

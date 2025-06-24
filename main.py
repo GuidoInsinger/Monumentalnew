@@ -6,8 +6,9 @@ import numpy as np
 import pandas as pd
 import websocket
 
+from src.controller import Controller
 from src.EKF import EKF
-from src.utils import Controls, GPSMeasurement, InertialMeasurement, StateVector, gerono
+from src.utils import GPSMeasurement, InertialMeasurement, StateVector
 from src.viz import init_rr, update_rr
 
 
@@ -25,10 +26,11 @@ class VizualizeEKF(websocket.WebSocketApp):
 
         cov0 = np.diag([1e-4, 1e-4, 1e-5, 1e-4])
 
-        Q = 0.05 * np.diag([4e-3, 4e-3, 4e-3, 4e-3])
+        Q = 0.05 * np.diag([2e-3, 2e-3, 4e-3, 4e-3])
         R = np.diag([0.1, 0.1])
 
         self.ekf = EKF(cov0=cov0, Q=Q, R=R)
+        self.controller = Controller(k1=3.5, k2=-10.0, k3=-8.0)
         self.start_time = time.time()
 
         self.state_hist: list[StateVector] = [state0]
@@ -109,65 +111,8 @@ class VizualizeEKF(websocket.WebSocketApp):
             self.state_hist.append(state_prior)
             self.inertial_hist.append(intertial_measurement)
 
-            # print("inertial update")
+            controls = self.controller.compute_controls(state=self.state_hist[-1], t=t)
 
-            t_epsilon = 1e-3
-            path_dir = gerono(t=t + t_epsilon) - gerono(t=t)
-            path_velocity = np.linalg.norm(path_dir / t_epsilon)
-
-            path_omega = -np.acos(
-                np.dot(
-                    path_dir,
-                    np.array(
-                        [
-                            np.cos(self.state_hist[-1].theta),
-                            np.sin(self.state_hist[-1].theta),
-                        ]
-                    ),
-                )
-                / np.linalg.norm(path_dir)
-            )
-            path_angle = -np.acos(
-                np.dot(
-                    path_dir,
-                    np.array(
-                        [
-                            np.cos(self.state_hist[-1].theta),
-                            np.sin(self.state_hist[-1].theta),
-                        ]
-                    ),
-                )
-                / np.linalg.norm(path_dir)
-            )
-            # print(path_angle)
-            pos_error = gerono(t=t) - self.state_hist[-1].vec[:2]
-            x_e, y_e = (
-                np.array(
-                    [
-                        [
-                            np.cos(self.state_hist[-1].theta),
-                            np.sin(self.state_hist[-1].theta),
-                        ],
-                        [
-                            -np.sin(self.state_hist[-1].theta),
-                            np.cos(self.state_hist[-1].theta),
-                        ],
-                    ]
-                )
-                @ pos_error
-            )
-
-            k1 = 2.5
-            k2 = 1.5
-            k3 = 5.0
-
-            v_des = path_velocity * np.cos(path_angle) + k1 * x_e
-            omega_des = ky * y_e + ktheta * path_angle
-            print(path_angle)
-
-            controls = Controls(
-                *np.array([v_des + omega_des * 0.25, v_des - omega_des * 0.25])
-            )
             inputs = {
                 "v_left": controls.v_l_desired,
                 "v_right": controls.v_r_desired,
