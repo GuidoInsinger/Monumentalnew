@@ -20,6 +20,7 @@ class EKF:
     def predict(
         self, state: StateVector, inertial_measurement: InertialMeasurement, dt: float
     ) -> StateVector:
+        # predict next state
         x_pred = state.x + state.v * np.cos(state.theta) * dt
         y_pred = state.y + state.v * np.sin(state.theta) * dt
         theta_pred = state.theta + inertial_measurement.omega_gyro * dt
@@ -27,7 +28,7 @@ class EKF:
 
         state_prior = StateVector(x=x_pred, y=y_pred, theta=theta_pred, v=v_pred)
 
-        F = np.array(
+        F = np.array(  # compute state prediction derivative
             [
                 [
                     1.0,
@@ -56,6 +57,7 @@ class EKF:
     ) -> StateVector:
         measurement_pred = np.array([state_prior.x, state_prior.y])
 
+        # compute measurement derivative
         H = np.array([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0]])
 
         y_hat = position_measurement.vec - measurement_pred

@@ -9,7 +9,9 @@ from src.websocket_wrapper import WebsocketWrapper
 if __name__ == "__main__":
     # ekf parameters
     state0 = StateVector(*np.array([0.0, 0.0, 0.0, 0.0]))
-    cov0 = np.diag([1e-4, 1e-4, 1e-5, 1e-4])
+    cov0 = 1e-3 * np.diag(
+        [1e-4, 1e-4, 1e-5, 1e-4]
+    )  # very small P0 because this is actually certain
 
     Q = 0.005 * np.diag([3e-3, 3e-3, 4e-3, 4e-3])
     R = np.diag([0.1, 0.1])
@@ -36,5 +38,5 @@ if __name__ == "__main__":
     robot = Robot(dimensions=dimensions, state0=state0, ekf=ekf, controller=controller)
 
     # run websocket
-    viz_ekf = WebsocketWrapper(robot=robot)  # websocket
-    viz_ekf.run_forever()  # type: ignore
+    websocket_wrapper = WebsocketWrapper(robot=robot)  # websocket
+    websocket_wrapper.run_forever()  # type: ignore

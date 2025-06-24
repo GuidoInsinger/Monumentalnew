@@ -9,7 +9,6 @@ from .utils.datatypes import (
     GPSMeasurement,
     InertialMeasurement,
     RobotDimensions,
-    SensorMessage,
     StateVector,
 )
 
@@ -30,38 +29,6 @@ class Robot:
         self.inertial_hist: list[InertialMeasurement] = []
         self.gps_hist: list[GPSMeasurement] = []
 
-    def process_sensordata(self, sensormessages: list[SensorMessage]) -> None:
-        # ingest message
-        accelerometer_message = sensormessages[0]
-        gyro_message = sensormessages[1]
-        gps_message = sensormessages[2]
-
-        # unpack data
-        accelerometer_data = accelerometer_message["data"]
-        gyro_data = gyro_message["data"]
-        gps_data = gps_message["data"]
-
-        # unpack timestamps
-        inertial_timestamp = pd.Timestamp(
-            accelerometer_message["timestamp"]
-        )  # assumes gyro_timestamp is equal to accelerometer timestamp
-
-        gps_timestamp = pd.Timestamp(gps_message["timestamp"])
-
-        # First process GPS
-        # This will ensure that the last prior is used
-        if len(self.gps_hist) > 0:
-            if self.gps_hist[-1].timestamp != gps_timestamp:
-                self.process_gps(gps_data=gps_data, gps_timestamp=gps_timestamp)
-        else:
-            self.process_gps(gps_data=gps_data, gps_timestamp=gps_timestamp)
-
-        self.process_inertial(
-            accelerometer_data=accelerometer_data,
-            gyro_data=gyro_data,
-            inertial_timestamp=inertial_timestamp,
-        )
-
     def process_gps(self, gps_data: list[float], gps_timestamp: pd.Timestamp) -> None:
         print("processing GPS")
         position_measurement = GPSMeasurement(
@@ -69,13 +36,12 @@ class Robot:
             y_gps=cast(np.floating, gps_data[1]),
             timestamp=gps_timestamp,
         )
-
-        self.gps_hist.append(position_measurement)
-
-        state_updated = self.ekf.update(
+        state_updated = self.ekf.update(  # update state according to gps measurement
             state_prior=self.state_hist[-1],
             position_measurement=position_measurement,
         )
+        # update histories
+        self.gps_hist.append(position_measurement)
         self.state_hist.append(state_updated)
 
     def process_inertial(
@@ -98,7 +64,7 @@ class Robot:
         else:
             dt = 0.05  # Approximation for first measurement
 
-        state_prior = self.ekf.predict(
+        state_prior = self.ekf.predict(  # compute predicted next state
             state=self.state_hist[-1],
             inertial_measurement=intertial_measurement,
             dt=dt,

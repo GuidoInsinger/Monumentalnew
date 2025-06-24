@@ -23,7 +23,7 @@ def init_rr(robot: Robot) -> None:
 
     rr.send_blueprint(blueprint=blueprint)
     rr.set_time("time", duration=0.0)
-    rr.log(
+    rr.log(  # log cart shape
         "map/box",
         rr.Boxes3D(
             centers=robot.dimensions.body_center,
@@ -31,7 +31,7 @@ def init_rr(robot: Robot) -> None:
             fill_mode=3,
         ),
     )
-    rr.log(
+    rr.log(  # log wheel shape
         "map/box/wheel",
         rr.Ellipsoids3D(
             half_sizes=robot.dimensions.wheel_half_sizes,
@@ -44,21 +44,21 @@ def init_rr(robot: Robot) -> None:
         np.hstack((gerono(t=cast(float, t)), np.zeros(1)))
         for t in np.arange(0, 20, 0.01)
     ]
-    rr.log("map/goal", rr.LineStrips3D(goal_path))
+    rr.log("map/goal", rr.LineStrips3D(goal_path))  # log gerono path
 
 
 def update_rr(robot: Robot, t: float) -> None:
     sensor_color = [1.0, 0.65, 0.0, 1.0]
     last_state = robot.state_hist[-1]
     rr.set_time("time", duration=t)
-    rr.log(
+    rr.log(  # log current goal position
         "map/goal",
         rr.Arrows3D(
             vectors=np.array([0, 0, -1]),
             origins=np.hstack((gerono(t=t), np.ones(1))),
         ),
     )
-    rr.log(  # log
+    rr.log(  # log trajectory
         "map/path",
         rr.LineStrips3D(
             np.array(
@@ -79,7 +79,7 @@ def update_rr(robot: Robot, t: float) -> None:
         ),
     )
 
-    rr.log(
+    rr.log(  # log cart posititon
         "map/box",
         rr.Transform3D(
             translation=np.array(
@@ -91,11 +91,13 @@ def update_rr(robot: Robot, t: float) -> None:
             ),
         ),
     )
+    ax_vec = np.array([robot.inertial_hist[-1].a_x, 0.0, 0.0])
+    ay_vec = np.array([0.0, -robot.inertial_hist[-1].a_y, 0.0])
     rr.log(  # log accelerometer vector
         "map/box",
         rr.Arrows3D(
-            vectors=np.hstack((robot.inertial_hist[-1].vec, np.zeros(1))),
-            origins=np.zeros(3),
+            vectors=np.vstack((ax_vec, ay_vec)),
+            origins=np.zeros((2, 3)),
             colors=sensor_color,
         ),
     )
