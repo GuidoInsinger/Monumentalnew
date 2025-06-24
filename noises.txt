@@ -1,0 +1,5 @@
+ax variance in 60.021 sec with 1197 datapoints : 0.0003877789991218123 ~ 0.0004
+ay variance in 60.021 sec with 1197 datapoints : 0.0003741153195458516 ~ 0.0004
+ax variance in 60.021 sec with 1197 datapoints : 0.0004125417344406701 ~ 0.0004
+xgps variance in 60.021 sec with 59 datapoints : 0.009710329953378501 ~ 0.01
+ygps variance in 60.021 sec with 59 datapoints : 0.00880059744634365 ~ 0.01

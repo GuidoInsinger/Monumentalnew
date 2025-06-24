@@ -42,7 +42,8 @@ for t in np.arange(0, 20, 0.01):
     x, y = gerono(t)
     allpoints.append([x, y])
 
-sensorhistory: list[list[float]] = []
+intertial_hist: list[list[float]] = []
+gps_hist: list[list[float]] = []
 
 
 def on_message(ws: websocket.WebSocket, message: str):
@@ -58,22 +59,24 @@ def on_message(ws: websocket.WebSocket, message: str):
         gyrodata = sensors[1]["data"]
         gpsdata = sensors[2]["data"]
 
-        if len(sensorhistory) == 0:
-            sensorhistory.append([*accdata, *gyrodata, *gpsdata])
+        intertial_hist.append([*accdata, *gyrodata])
 
-        elif gpsdata != sensorhistory[-1][3:]:
+        if len(gps_hist) == 0:
+            gps_hist.append([*gpsdata])
+
+        elif gpsdata != gps_hist[-1]:
             print("new!")
-            sensorhistory.append([*accdata, *gyrodata, *gpsdata])
+            gps_hist.append([*gpsdata])
 
         rr.set_time("time", duration=t)
 
         rr.log("map/box", rr.Boxes2D(centers=gpsdata, half_sizes=[0.5, 1]))
-        rr.log(
-            "map/path",
-            rr.LineStrips2D(
-                [s[3:] for s in sensorhistory], radii=0.2, colors=[0, 255, 255, 255]
-            ),
-        )
+        # rr.log(
+        #     "map/path",
+        #     rr.LineStrips2D(
+        #         [s[3:] for s in sensorhistory], radii=0.2, colors=[0, 255, 255, 255]
+        #     ),
+        # )
 
         rr.log("xgps", rr.Scalars(gpsdata[0]))
         rr.log("ygps", rr.Scalars(gpsdata[1]))
@@ -82,9 +85,30 @@ def on_message(ws: websocket.WebSocket, message: str):
         rr.log("gyro", rr.Scalars(gyrodata[0]))
 
         inputs = {
-            "v_left": np.cos(t),
-            "v_right": np.sin(t),
+            "v_left": 0.0,
+            "v_right": 0.0,
         }
+        if t > 60:
+            intertial = np.array(intertial_hist)
+            gps = np.array(gps_hist)
+
+            print(
+                f"ax variance in {t:.3f} sec with {len(intertial_hist)} datapoints : {np.var(intertial[:, 0])}"
+            )
+            print(
+                f"ay variance in {t:.3f} sec with {len(intertial_hist)} datapoints : {np.var(intertial[:, 1])}"
+            )
+            print(
+                f"ax variance in {t:.3f} sec with {len(intertial_hist)} datapoints : {np.var(intertial[:, 2])}"
+            )
+
+            print(
+                f"xgps variance in {t:.3f} sec with {len(gps_hist)} datapoints : {np.var(gps[:, 0])}"
+            )
+            print(
+                f"ygps variance in {t:.3f} sec with {len(gps_hist)} datapoints : {np.var(gps[:, 1])}"
+            )
+            ws.close()
         ws.send(json.dumps(inputs))
 
 
