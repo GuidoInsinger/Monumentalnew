@@ -3,14 +3,15 @@ from typing import cast
 import numpy as np
 import pandas as pd
 
-from .controller import Controller
-from .datatypes import (
+from utils.datatypes import (
     GPSMeasurement,
     InertialMeasurement,
     RobotDimensions,
     SensorMessage,
     StateVector,
 )
+
+from .controller import Controller
 from .EKF import EKF
 
 

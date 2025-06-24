@@ -5,10 +5,10 @@ import numpy as np
 import websocket
 
 from src.controller import Controller
-from src.datatypes import RobotDimensions, StateVector
 from src.EKF import EKF
 from src.robot import Robot
-from src.viz import init_rr, update_rr
+from src.utils.datatypes import RobotDimensions, StateVector
+from visualization import init_rr, update_rr
 
 
 class WebsocketWrapper(websocket.WebSocketApp):

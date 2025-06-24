@@ -4,8 +4,9 @@ import numpy as np
 import rerun as rr
 import rerun.blueprint as rrb
 
+from utils.funcs import gerono
+
 from .robot import Robot
-from .utils import gerono
 
 
 def init_rr(robot: Robot) -> None:
