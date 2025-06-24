@@ -2,7 +2,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from src.utils import Controls, StateVector, angle_between_vectors, gerono
+from .datatypes import Controls, StateVector
+from .utils import angle_between_vectors, gerono
 
 
 @dataclass
@@ -52,7 +53,6 @@ class Controller:
         v_des = path_velocity + self.k1 * x_e
         omega_des = -path_omega + self.k2 * y_e + self.k3 * np.sin(theta_e)
 
-        print(path_omega)
         controls = Controls(
             *np.array([v_des + omega_des * 0.25, v_des - omega_des * 0.25])
         )

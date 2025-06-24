@@ -1,19 +1,18 @@
 import json
 import time
-from typing import cast
 
 import numpy as np
-import pandas as pd
 import websocket
 
 from src.controller import Controller
+from src.datatypes import RobotDimensions, StateVector
 from src.EKF import EKF
-from src.utils import GPSMeasurement, InertialMeasurement, StateVector
+from src.robot import Robot
 from src.viz import init_rr, update_rr
 
 
-class VizualizeEKF(websocket.WebSocketApp):
-    def __init__(self):
+class WebsocketWrapper(websocket.WebSocketApp):
+    def __init__(self, robot: Robot):
         super().__init__(  # type:ignore
             "ws://91.99.103.188:8765",
             on_open=self.on_open,
@@ -22,23 +21,8 @@ class VizualizeEKF(websocket.WebSocketApp):
             on_close=self.on_close,
         )
 
-        state0 = StateVector(*np.array([0.0, 0.0, 0.0, 0.0]))
-
-        cov0 = np.diag([1e-4, 1e-4, 1e-5, 1e-4])
-
-        Q = 0.05 * np.diag([2e-3, 2e-3, 4e-3, 4e-3])
-        R = np.diag([0.1, 0.1])
-
-        self.ekf = EKF(cov0=cov0, Q=Q, R=R)
-        self.controller = Controller(k1=3.5, k2=-10.0, k3=-8.0)
-        self.start_time = time.time()
-
-        self.state_hist: list[StateVector] = [state0]
-
-        self.inertial_hist: list[InertialMeasurement] = []
-        self.gps_hist: list[GPSMeasurement] = []
-
-        init_rr()
+        self.robot = robot
+        init_rr(self.robot)
 
     def on_message(self, ws: websocket.WebSocket, message: str):
         t = time.time() - self.start_time
@@ -48,76 +32,19 @@ class VizualizeEKF(websocket.WebSocketApp):
             self.close()  # type:ignore
 
         elif msg["message_type"] == "sensors":
-            sensors = msg["sensors"]
+            sensormessages = msg["sensors"]
 
-            acc_data = sensors[0]["data"]
-            gyro_data = sensors[1]["data"]
-            gps_data = sensors[2]["data"]
+            self.robot.process_sensordata(sensormessages=sensormessages)
 
-            inertial_timestamp = pd.Timestamp(
-                sensors[0]["timestamp"]
-            )  # assumes gyro_timestamp is equal
-
-            gps_timestamp = pd.Timestamp(sensors[2]["timestamp"])
-
-            intertial_measurement = InertialMeasurement(
-                a_x=cast(np.floating, acc_data[0]),
-                a_y=cast(np.floating, acc_data[1]),
-                omega_gyro=cast(np.floating, gyro_data[0]),
-                timestamp=inertial_timestamp,
+            controls = self.robot.controller.compute_controls(
+                state=self.robot.state_hist[-1], t=t
             )
-            # do update first, this works because the server never sends a gps measurement first
-            # and is necessary such that the prediction for the right timestep is used
-
-            if len(self.gps_hist) > 0:
-                if self.gps_hist[-1].timestamp != gps_timestamp:
-                    position_measurement = GPSMeasurement(
-                        x_gps=gps_data[0], y_gps=gps_data[1], timestamp=gps_timestamp
-                    )
-
-                    self.gps_hist.append(position_measurement)
-
-                    state_updated = self.ekf.update(
-                        state_prior=self.state_hist[-1],
-                        position_measurement=position_measurement,
-                    )
-                    self.state_hist.append(state_updated)
-                    # print("gps update")
-            else:
-                position_measurement = GPSMeasurement(
-                    x_gps=gps_data[0], y_gps=gps_data[1], timestamp=gps_timestamp
-                )
-                self.gps_hist.append(position_measurement)
-
-                state_updated = self.ekf.update(
-                    state_prior=self.state_hist[-2],
-                    position_measurement=position_measurement,
-                )
-                self.state_hist.append(state_updated)
-
-            if len(self.inertial_hist) > 0:
-                dt = (
-                    inertial_timestamp - self.inertial_hist[-1].timestamp
-                ).total_seconds()  # assumes gps always arrives with an inertial measurement
-            else:
-                dt = 0.05  # roughly true
-
-            state_prior = self.ekf.predict(
-                state=self.state_hist[-1],
-                inertial_measurement=intertial_measurement,
-                dt=dt,
-            )
-
-            self.state_hist.append(state_prior)
-            self.inertial_hist.append(intertial_measurement)
-
-            controls = self.controller.compute_controls(state=self.state_hist[-1], t=t)
 
             inputs = {
                 "v_left": controls.v_l_desired,
                 "v_right": controls.v_r_desired,
             }
-            update_rr(self.state_hist, t=t, gps_hist=self.gps_hist)
+            update_rr(self.robot, t=t)
 
             ws.send(json.dumps(inputs))
 
@@ -128,19 +55,37 @@ class VizualizeEKF(websocket.WebSocketApp):
         print("### closed ###")
 
     def on_open(self, ws: websocket.WebSocket):
+        self.start_time = time.time()
+        inputs = {
+            "v_left": 2.0,
+            "v_right": 2.0,
+        }
+        ws.send(json.dumps(inputs))
         print("Opened connection")
 
 
 if __name__ == "__main__":
     # websocket.enableTrace(True)
-    viz_ekf = VizualizeEKF()
+    r_wheel = 0.5
+    w_wheel = 0.05
 
-    # ws = websocket.WebSocketApp(
-    #     "ws://91.99.103.188:8765",
-    #     on_open=viz_ekf.on_open,
-    #     on_message=viz_ekf.on_message,
-    #     on_error=viz_ekf.on_error,
-    #     on_close=viz_ekf.on_close,
-    # )
+    d_body = 0.125
+    w_body = 0.25
+    h_body = 0.05
 
+    state0 = StateVector(*np.array([0.0, 0.0, 0.0, 0.0]))
+
+    cov0 = np.diag([1e-4, 1e-4, 1e-5, 1e-4])
+
+    Q = 0.005 * np.diag([3e-3, 3e-3, 4e-3, 4e-3])
+    R = np.diag([0.1, 0.1])
+
+    ekf = EKF(cov0=cov0, Q=Q, R=R)
+    controller = Controller(k1=2.5, k2=-8.0, k3=-5.0)
+    dimensions = RobotDimensions(
+        d_body=d_body, w_body=w_body, h_body=h_body, r_wheel=r_wheel, w_wheel=w_wheel
+    )
+    robot = Robot(dimensions=dimensions, state0=state0, ekf=ekf, controller=controller)
+
+    viz_ekf = WebsocketWrapper(robot=robot)
     viz_ekf.run_forever()  # type: ignore

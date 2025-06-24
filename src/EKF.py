@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 import numpy as np
 import numpy.typing as npt
 
-from .utils import GPSMeasurement, InertialMeasurement, StateVector
+from .datatypes import GPSMeasurement, InertialMeasurement, StateVector
 
 
 class EKF:

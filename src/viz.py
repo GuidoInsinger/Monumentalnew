@@ -4,10 +4,11 @@ import numpy as np
 import rerun as rr
 import rerun.blueprint as rrb
 
-from .utils import GPSMeasurement, StateVector, gerono
+from .robot import Robot
+from .utils import gerono
 
 
-def init_rr() -> None:
+def init_rr(robot: Robot) -> None:
     rr.init("test", spawn=True)
     blueprint = rrb.Horizontal(
         rrb.Spatial3DView(name="Map", origin="/map"),
@@ -18,30 +19,22 @@ def init_rr() -> None:
             rrb.TimeSeriesView(name="v EKF", origin="/v_ekf"),
         ),
     )
-    r_wheel = 0.1
-    w_wheel = 0.05
-
-    d_body = 0.125
-    w_body = 0.25
-    h_body = 0.05
 
     rr.send_blueprint(blueprint=blueprint)
     rr.set_time("time", duration=0.0)
     rr.log(
         "map/box",
         rr.Boxes3D(
-            centers=[0, 0, r_wheel],
-            half_sizes=[d_body, w_body, h_body],
+            centers=robot.dimensions.body_center,
+            half_sizes=robot.dimensions.body_half_sizes,
             fill_mode=3,
         ),
     )
     rr.log(
         "map/box/wheel",
         rr.Ellipsoids3D(
-            half_sizes=np.tile(np.array([r_wheel, w_wheel, r_wheel]), 2),
-            centers=np.array(
-                [[0.0, w_body + w_wheel, r_wheel], [0.0, -(w_body + w_wheel), r_wheel]]
-            ),
+            half_sizes=robot.dimensions.wheel_half_sizes,
+            centers=robot.dimensions.wheel_centers,
             fill_mode=3,
         ),
     )
@@ -53,9 +46,8 @@ def init_rr() -> None:
     rr.log("map/goal", rr.LineStrips3D(goal_path))
 
 
-def update_rr(
-    state_hist: list[StateVector], gps_hist: list[GPSMeasurement], t: float
-) -> None:
+def update_rr(robot: Robot, t: float) -> None:
+    last_state = robot.state_hist[-1]
     rr.set_time("time", duration=t)
     rr.log(
         "map/goalpoint",
@@ -69,9 +61,9 @@ def update_rr(
         rr.LineStrips3D(
             np.array(
                 [
-                    [state.x for state in state_hist],
-                    [state.y for state in state_hist],
-                    [0.0 for _ in range(len(state_hist))],
+                    [state.x for state in robot.state_hist],
+                    [state.y for state in robot.state_hist],
+                    [0.0 for _ in range(len(robot.state_hist))],
                 ]
             ).T,
         ),
@@ -79,7 +71,15 @@ def update_rr(
     rr.log(
         "map/GPS",
         rr.Points3D(
-            positions=[np.hstack((gps.vec, np.zeros(1))) for gps in gps_hist],
+            positions=[np.hstack((gps.vec, np.zeros(1))) for gps in robot.gps_hist],
+            colors=[1.0, 0.65, 0.0, 1.0],
+            radii=0.01,
+        ),
+    )
+    rr.log(
+        "map/accelerometer",
+        rr.Points3D(
+            positions=[np.hstack((gps.vec, np.zeros(1))) for gps in robot.gps_hist],
             colors=[1.0, 0.65, 0.0, 1.0],
             radii=0.01,
         ),
@@ -87,14 +87,15 @@ def update_rr(
     rr.log(
         "map/box",
         rr.Transform3D(
-            translation=np.array([state_hist[-1].x, state_hist[-1].y, 0.025]),
+            translation=np.array([last_state.x, last_state.y, 0.025]),
             rotation_axis_angle=rr.RotationAxisAngle(
-                axis=np.array([0, 0, 1]), radians=cast(float, state_hist[-1].theta)
+                axis=np.array([0, 0, 1]),
+                radians=cast(float, last_state.theta),
             ),
         ),
     )
 
-    rr.log("x_ekf", rr.Scalars(state_hist[-1].x))
-    rr.log("y_ekf", rr.Scalars(state_hist[-1].y))
-    rr.log("theta_ekf", rr.Scalars(state_hist[-1].theta))
-    rr.log("v_ekf", rr.Scalars(state_hist[-1].v))
+    rr.log("x_ekf", rr.Scalars(last_state.x))
+    rr.log("y_ekf", rr.Scalars(last_state.y))
+    rr.log("theta_ekf", rr.Scalars(last_state.theta))
+    rr.log("v_ekf", rr.Scalars(last_state.v))
