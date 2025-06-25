@@ -15,7 +15,7 @@ $$
 * $\theta$: heading
 * $v$: forward velocity in body frame
 
-$$\mathbf{u}_k = 
+$$ = 
 \begin{bmatrix}
 a_{k}^{acc} \\\
 \omega^{gyro}_k
