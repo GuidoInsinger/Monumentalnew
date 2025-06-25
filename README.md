@@ -15,17 +15,28 @@ $$
 * $\theta$: heading
 * $v$: forward velocity in body frame
 
+$$\mathbf{u}_k = 
+\begin{bmatrix}
+a_{k}^{acc} \\
+\omega^{gyro}_k \\
 
+\end{bmatrix}
+$$
+* $a_{k}^{acc}$: forward acceleration reading at time k
+* $\omega^{gyro}_k$: gyroscope reading at time k
+* $v$: forward velocity in body frame
+
+This means I ignore the second accelerometer message. This could potentially be useful but I believe it is somewhat redundant information since $a_y=V\omega$ which should, if the rest of the filter does its job, be embedded in the gyroscope measurement and velocities which are updated by the GPS messages
 
 Discretized with Euler integration over timestep $\Delta t$:
 
 $$
-x_{k+1}'=f(\mathbf{x}_k) =
+x_{k+1}'=f(\mathbf{x}_k, \mathbf{u}_k) =
 \begin{cases}
 x_{k+1} &= x_k + v_k \cos(\theta_k) \Delta t \\
 y_{k+1} &= y_k + v_k \sin(\theta_k) \Delta t \\
 \theta_{k+1} &= \theta_k + \omega_k \Delta t \\
-v_{k+1} &= v_k + a_k \Delta t \\
+v_{k+1} &= v_k + a_k^{acc} \Delta t \\
 \end{cases}
 $$
 
@@ -45,7 +56,7 @@ $$
 
 
 
-So the measurement function is:
+And the measurement function is:
 
 $$
 h(\mathbf{x}_{k+1}') =
