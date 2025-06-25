@@ -1,10 +1,12 @@
+### EKF Equations
+With state vector
 $$
-\mathbf{x} = 
+\mathbf{x_k} = 
 \begin{bmatrix}
-x \\
-y \\
-\theta \\
-v \\
+x_k \\
+y_k \\
+\theta_k \\
+v_k \\
 \end{bmatrix}
 $$
 
@@ -18,98 +20,93 @@ $$
 Discretized with Euler integration over timestep $\Delta t$:
 
 $$
-\frac{\partial f}{\partial \mathbf{x}} =
-\begin{aligned}
+x_{k+1}'=f(\mathbf{x}_k) =
+\begin{cases}
 x_{k+1} &= x_k + v_k \cos(\theta_k) \Delta t \\
 y_{k+1} &= y_k + v_k \sin(\theta_k) \Delta t \\
 \theta_{k+1} &= \theta_k + \omega_k \Delta t \\
 v_{k+1} &= v_k + a_k \Delta t \\
-\end{aligned}
+\end{cases}
 $$
 
-Note:
-
-* The yaw rate is updated toward the measured value.
-* The acceleration is assumed to directly change the forward speed.
 
 
-Linearized around the current estimate:
-
-$$
-F_k = \frac{\partial f}{\partial \mathbf{x}} = 
-\begin{bmatrix}
-1 & 0 & -v \sin(\theta) \Delta t & \cos(\theta) \Delta t & \\
-0 & 1 &  v \cos(\theta) \Delta t & \sin(\theta) \Delta t & \\
-0 & 0 & 1 & 0 & \\
-0 & 0 & 0 & 1 & \\
-
-\end{bmatrix}
-$$
 
 
 GPS provides:
 
 $$
-\mathbf{z}_k =
+\mathbf{z}_{k+1} =
 \begin{bmatrix}
-x_k \\
-y_k
+x_{k+1}^{GPS} \\
+y_{k+1}^{GPS}
 \end{bmatrix}
 $$
+
+
 
 So the measurement function is:
 
 $$
-h(\mathbf{x}) =
+h(\mathbf{x}_{k+1}') =
 \begin{bmatrix}
-x \\
-y
+x_{k+1}' \\
+y_{k+1}'
 \end{bmatrix}
 $$
 
-And its Jacobian is:
 
+### Jacobians
 $$
-H_k = \frac{\partial h}{\partial \mathbf{x}} =
+
+F_k =\left.\frac{\partial f}{\partial \boldsymbol{x}}\right|_{\boldsymbol{x}=\boldsymbol{x}_k}= 
+\begin{bmatrix}
+1 & 0 & -v_k \sin(\theta_k) \Delta t & \cos(\theta_k) \Delta t & \\
+0 & 1 &  v_k \cos(\theta_k) \Delta t & \sin(\theta_k) \Delta t & \\
+0 & 0 & 1 & 0 & \\
+0 & 0 & 0 & 1 & \\
+
+\end{bmatrix}
+$$
+$$
+H_{k+1} = \left.\frac{\partial f}{\partial \boldsymbol{x}}\right|_{\boldsymbol{x}=\boldsymbol{x}_{k+1}'} =
 \begin{bmatrix}
 1 & 0 & 0 & 0 & 0 \\
 0 & 1 & 0 & 0 & 0
 \end{bmatrix}
 $$
 
----
 
-## 🔷 6. **EKF Equations**
 
-### 🧭 Prediction Step:
+#### Prediction Step
 
 $$
-\hat{\mathbf{x}}_{k|k-1} = f(\hat{\mathbf{x}}_{k-1})
+\boldsymbol{x}_{k+1}' = f(\hat{\mathbf{x}}_{k})
 $$
 
 $$
-P_{k|k-1} = F_k P_{k-1} F_k^\top + Q
+P_{k+1}' = F_k P_k F_k^\top + Q
 $$
 
-### 📡 Update Step (if GPS available):
+Update Step (if GPS available):
 
 $$
-\mathbf{y}_k = \mathbf{z}_k - h(\hat{\mathbf{x}}_{k|k-1})
-$$
-
-$$
-S_k = H_k P_{k|k-1} H_k^\top + R
+\mathbf{\hat{y}}_{k+1} = \mathbf{z}_{k+1} - h(\mathbf{x}_{k+1})
 $$
 
 $$
-K_k = P_{k|k-1} H_k^\top S_k^{-1}
+S_{k+1} = K_{k+1} P_{k+1}' H_{k+1}^\top + R
 $$
 
 $$
-\hat{\mathbf{x}}_k = \hat{\mathbf{x}}_{k|k-1} + K_k \mathbf{y}_k
+K_{k+1} = P_{k+1}' H_{k+1}^\top S_{k+1}^{-1}
 $$
 
 $$
-P_k = (I - K_k H_k) P_{k|k-1}
+\mathbf{x}_{k+1} = \mathbf{x}_{k+1}' + K_{k+1} \mathbf{y}_{k+1}
+$$
+
+$$
+P_{k+1} = (I - K_{k+1} H_{k+1}) P_{k+1}'
 $$
 
