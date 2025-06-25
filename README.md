@@ -3,10 +3,10 @@ With state vector
 $$
 \mathbf{x}_k = 
 \begin{bmatrix}
-x_k \\
-y_k \\
-\theta_k \\
-v_k \\
+x_k \\\
+y_k \\\
+\theta_k \\\
+v_k
 \end{bmatrix}
 $$
 
@@ -17,9 +17,8 @@ $$
 
 $$\mathbf{u}_k = 
 \begin{bmatrix}
-a_{k}^{acc} \\
-\omega^{gyro}_k \\
-
+a_{k}^{acc} \\\
+\omega^{gyro}_k
 \end{bmatrix}
 $$
 
@@ -34,10 +33,10 @@ Discretized with Euler integration over timestep $\Delta t$
 $$
 x_{k+1}\'=f(\mathbf{x}_k, \mathbf{u}_k) =
 \begin{cases}
-x_{k+1} = x_k + v_k \cos(\theta_k) \Delta t \\
-y_{k+1} = y_k + v_k \sin(\theta_k) \Delta t \\
-\theta_{k+1} &= \theta_k + \omega_k \Delta t \\
-v_{k+1} = v_k + a_k^{acc} \Delta t \\
+x_{k+1} = x_k + v_k \cos(\theta_k) \Delta t \\\
+y_{k+1} = y_k + v_k \sin(\theta_k) \Delta t \\\
+\theta_{k+1} &= \theta_k + \omega_k \Delta t \\\
+v_{k+1} = v_k + a_k^{acc} \Delta t
 \end{cases}
 $$
 
@@ -50,7 +49,7 @@ GPS provides:
 $$
 \mathbf{z}_{k+1} =
 \begin{bmatrix}
-x_{k+1}^{GPS} \\
+x_{k+1}^{GPS} \\\
 y_{k+1}^{GPS}
 \end{bmatrix}
 $$
@@ -62,7 +61,7 @@ And the measurement function is:
 $$
 h(\mathbf{x}_{k+1}') =
 \begin{bmatrix}
-x_{k+1}' \\
+x_{k+1}' \\\
 y_{k+1}'
 \end{bmatrix}
 $$
@@ -72,17 +71,16 @@ $$
 $$
 F_k =\left\frac{\partial f}{\partial \boldsymbol{x}}\right|_{\boldsymbol{x}=\boldsymbol{x}_k}= 
 \begin{bmatrix}
-1 & 0 & -v_k \sin(\theta_k) \Delta t & \cos(\theta_k) \Delta t & \\
-0 & 1 &  v_k \cos(\theta_k) \Delta t & \sin(\theta_k) \Delta t & \\
-0 & 0 & 1 & 0 & \\
-0 & 0 & 0 & 1 & \\
-
+1 & 0 & -v_k \sin(\theta_k) \Delta t & \cos(\theta_k) \Delta t \\\
+0 & 1 &  v_k \cos(\theta_k) \Delta t & \sin(\theta_k) \Delta t \\\
+0 & 0 & 1 & 0 \\\
+0 & 0 & 0 & 1
 \end{bmatrix}
 $$
 $$
 H_{k+1} = \left\frac{\partial f}{\partial \boldsymbol{x}}\right|_{\boldsymbol{x}=\boldsymbol{x}_{k+1}'} =
 \begin{bmatrix}
-1 & 0 & 0 & 0 & 0 \\
+1 & 0 & 0 & 0 & 0 \\\
 0 & 1 & 0 & 0 & 0
 \end{bmatrix}
 $$
