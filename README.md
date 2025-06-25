@@ -69,7 +69,6 @@ $$
 
 ### Jacobians
 $$
-
 F_k =\left.\frac{\partial f}{\partial \boldsymbol{x}}\right|_{\boldsymbol{x}=\boldsymbol{x}_k}= 
 \begin{bmatrix}
 1 & 0 & -v_k \sin(\theta_k) \Delta t & \cos(\theta_k) \Delta t & \\
