@@ -22,13 +22,14 @@ a_{k}^{acc} \\
 
 \end{bmatrix}
 $$
+
 * $a_{k}^{acc}$: forward acceleration reading at time k
 * $\omega^{gyro}_k$: gyroscope reading at time k
 * $v$: forward velocity in body frame
 
 This means I ignore the second accelerometer message. This could potentially be useful but I believe it is somewhat redundant information since $a_y=V\omega$ which should, if the rest of the filter does its job, be embedded in the gyroscope measurement and velocities which are updated by the GPS messages
 
-Discretized with Euler integration over timestep $\Delta t$:
+Discretized with Euler integration over timestep $\Delta t$
 
 $$
 x_{k+1}'=f(\mathbf{x}_k, \mathbf{u}_k) =
