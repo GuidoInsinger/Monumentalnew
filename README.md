@@ -32,7 +32,7 @@ This means I ignore the second accelerometer message. This could potentially be 
 Discretized with Euler integration over timestep $\Delta t$
 
 $$
-x_{k+1}'=f(\mathbf{x}_k, \mathbf{u}_k) =
+x_{k+1}\'=f(\mathbf{x}_k, \mathbf{u}_k) =
 \begin{cases}
 x_{k+1} &= x_k + v_k \cos(\theta_k) \Delta t \\
 y_{k+1} &= y_k + v_k \sin(\theta_k) \Delta t \\
