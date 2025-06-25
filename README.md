@@ -1,7 +1,7 @@
 ### EKF Equations
 With state vector
 $$
-\mathbf{x_k} = 
+\mathbf{x}_k = 
 \begin{bmatrix}
 x_k \\
 y_k \\
@@ -34,10 +34,10 @@ Discretized with Euler integration over timestep $\Delta t$
 $$
 x_{k+1}\'=f(\mathbf{x}_k, \mathbf{u}_k) =
 \begin{cases}
-x_{k+1} &= x_k + v_k \cos(\theta_k) \Delta t \\
-y_{k+1} &= y_k + v_k \sin(\theta_k) \Delta t \\
+x_{k+1} = x_k + v_k \cos(\theta_k) \Delta t \\
+y_{k+1} = y_k + v_k \sin(\theta_k) \Delta t \\
 \theta_{k+1} &= \theta_k + \omega_k \Delta t \\
-v_{k+1} &= v_k + a_k^{acc} \Delta t \\
+v_{k+1} = v_k + a_k^{acc} \Delta t \\
 \end{cases}
 $$
 
