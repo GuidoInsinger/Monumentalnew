@@ -61,7 +61,7 @@ class RobotDimensions:
     w_wheel: float
 
     def __post_init__(self):
-        self.body_center = np.array([0, 0, self.r_wheel])
+        self.body_center = np.array([0, 0, self.r_wheel / 2])
         self.body_half_sizes = (
             np.array(
                 [
@@ -88,12 +88,12 @@ class RobotDimensions:
                 [
                     0.0,
                     self.w_body + self.w_wheel,
-                    self.r_wheel,
+                    self.r_wheel / 2,
                 ],
                 [
                     0.0,
                     -(self.w_body + self.w_wheel),
-                    self.r_wheel,
+                    self.r_wheel / 2,
                 ],
             ]
         )

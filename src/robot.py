@@ -30,7 +30,6 @@ class Robot:
         self.gps_hist: list[GPSMeasurement] = []
 
     def process_gps(self, gps_data: list[float], gps_timestamp: pd.Timestamp) -> None:
-        print("processing GPS")
         position_measurement = GPSMeasurement(
             x_gps=cast(np.floating, gps_data[0]),
             y_gps=cast(np.floating, gps_data[1]),
@@ -50,7 +49,6 @@ class Robot:
         gyro_data: list[float],
         inertial_timestamp: pd.Timestamp,
     ) -> None:
-        print("processing inertial")
         intertial_measurement = InertialMeasurement(
             a_x=cast(np.floating, accelerometer_data[0]),
             a_y=cast(np.floating, accelerometer_data[1]),
