@@ -70,7 +70,7 @@ $$
 
 ### Jacobians
 $$
-F_k =\left.\frac{\partial f}{\partial \boldsymbol{x}}\right|_{\boldsymbol{x}=\boldsymbol{x}_k}= 
+F_k =\left\frac{\partial f}{\partial \boldsymbol{x}}\right|_{\boldsymbol{x}=\boldsymbol{x}_k}= 
 \begin{bmatrix}
 1 & 0 & -v_k \sin(\theta_k) \Delta t & \cos(\theta_k) \Delta t & \\
 0 & 1 &  v_k \cos(\theta_k) \Delta t & \sin(\theta_k) \Delta t & \\
@@ -80,7 +80,7 @@ F_k =\left.\frac{\partial f}{\partial \boldsymbol{x}}\right|_{\boldsymbol{x}=\bo
 \end{bmatrix}
 $$
 $$
-H_{k+1} = \left.\frac{\partial f}{\partial \boldsymbol{x}}\right|_{\boldsymbol{x}=\boldsymbol{x}_{k+1}'} =
+H_{k+1} = \left\frac{\partial f}{\partial \boldsymbol{x}}\right|_{\boldsymbol{x}=\boldsymbol{x}_{k+1}'} =
 \begin{bmatrix}
 1 & 0 & 0 & 0 & 0 \\
 0 & 1 & 0 & 0 & 0
