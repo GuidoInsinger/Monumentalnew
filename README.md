@@ -1,5 +1,5 @@
 # Differential drive control
-
+Welcome to my solution for the Momumental controls assignment!
 
 ## Installation
 * First install [uv](https://docs.astral.sh/uv/getting-started/installation/) if you don't have it yet
@@ -28,7 +28,10 @@ In my visualization I built a 3d view that shows all of the important components
 
 https://github.com/user-attachments/assets/4b7726e6-df3f-48be-8b4b-7380455f19c9
 
-## Algorithm
+## Results
+My solution seems to track the input path quite well. Sometimes if GPS measurements are far from the predicted position, it takes a second to get back on track but that can be expected from noisy measurements. The score I get is usually around 1-1.5, depending on the specific run.
+
+## Approach
 
 To estimate the state of the robot and deal with the asynchronous measurements I chose an EKF. In my EKF I use the inertial measurements as inputs to the prediction step, and the GPS measurements as inputs for the update step. This allows me to run the prediction step whenever a new inertial measurement comes in which I found to be around ~20 hz and an update step to correct the predictions using the GPS measurement at around ~1hz. The uncertainty propagation ensures the EKF covariance will correctly encapsulate the compounded uncertainies from the ~20 prediction steps happening up until the point a GPS measurement comes in. 
 
@@ -65,7 +68,6 @@ a_{k}^{acc} \\
 
 This means I ignore the second accelerometer message. This could potentially be useful but I believe it is somewhat redundant information since $a_y=V\omega$ which should, if the rest of the filter does its job, be embedded in the gyroscope measurement and velocities which are updated by the GPS messages
 
----
 Discretized with Euler integration over timestep $\Delta t$, where I get the value of $\Delta t$ from the arrival time of the message
 
 ```math
@@ -126,7 +128,6 @@ H_{k+1} =\frac{\partial h}{\partial \mathbf{x}}|_{\mathbf{x}=\mathbf{x}_{k+1}'} 
 ```
 
 
-
 ### Prediction Step
 
 ```math
@@ -157,6 +158,74 @@ K_{k+1} = P_{k+1}' H_{k+1}^T S_{k+1}^{-1}
 
 ```math
 P_{k+1} = (I - K_{k+1} H_{k+1}) P_{k+1}'
+```
+
+### Q and R
+
+To get an estimate of the uncertainties of the sensor data I sent zero input controls to the server for ~60 seconds and calculated the variance in each signal. With this method I found
+
+```math
+\begin{aligned}
+\sigma^2_{a^{acc}} \approx 0.0004\\
+\sigma^2_{\omega^{gyro}} \approx 0.0004\\
+\sigma^2_{x^{GPS}} \approx 0.1\\
+\sigma^2_{y^{GPS}} \approx 0.1
+\end{aligned}
+```
+
+I choose Q such that the variances on $\omega$ and $v$ align with these estimated uncertainties, and I set the position variances to be the same as on the v state. This second part is not necessarily true because the uncertainties on x and y are dependent on the over time integrated error, but seems to work fine.
+
+```math
+Q=
+\Delta t
+\begin{bmatrix}
+\sigma^2_{a^{acc}} & 0 & 0 & 0 \\
+0 & \sigma^2_{a^{acc}} & 0 & 0\\
+0 & 0 & \sigma^2_{\omega^{gyro}} & 0 \\\
+0 & 0 & 0 & \sigma^2_{a^{acc}}
+\end{bmatrix}
+```
+
+I choose R to align with my estimated variance on $x^{GPS}$ and $y^{GPS}$
+
+```math
+R=
+\begin{bmatrix}
+\sigma^2_{x^{GPS}} & 0 \\
+0 & \sigma^2_{y^{GPS}}
+\end{bmatrix}
+```
+### Initial conditions
+
+The initial state is as per the assignment
+```math
+\mathbf{x}_0 = 
+\begin{bmatrix}
+x_0 \\
+y_0 \\
+\theta_0 \\
+v_0
+\end{bmatrix}
+=
+\begin{bmatrix}
+0.0 \\
+0.0 \\
+0.0 \\
+0.0 
+\end{bmatrix}
+```
+
+I simply set the initial covariance to some small values, given that the initial state is certain to be zeros.
+
+```math
+P_0
+=
+\begin{bmatrix}
+1^{-4} & 0 & 0 & 0 \\
+0 & 1^{-4} & 0 & 0\\
+0 & 0 & 1^{-5} & 0 \\\
+0 & 0 & 0 & 1^{-4}
+\end{bmatrix}
 ```
 
 ## Controller
@@ -190,6 +259,15 @@ I designed a controller which tracks the rate of curvature of the path $\omega^p
 \begin{aligned}
 v^{des}_k &= v^p(t) + k_1 * x^e_k(t) \\
 \omega^{des}_k &= \omega^p(t) + k_2 * y^e_k(t) + k_3 * sin(\theta^e_k(t))
+\end{aligned}
+```
+
+In my final solution I used the parameters
+```math
+\begin{aligned}
+k_1 &= 2.5 \\
+k_2 &= -8.0 \\
+k_3 &= -12.0
 \end{aligned}
 ```
 
@@ -241,4 +319,8 @@ v^{right}_k &= v^{des}_k - \omega^{des}_k \frac{L}{2}
 \end{aligned}
 ```
 
-
+## Possible improvements
+* I tuned the controller by just looking at the behaviour, this could be further improved
+* Including the second accelerometer measurement could potentially improve the state estimation
+* Using a dynamical model of a differential drive robot could improve the tracking performance by reducing the dynamics uncertainty. To keep using an EKF would have to incorporate a Time-Variant measurement model that uses the different measurements available at each timestep.
+* More experimentation with the specific values of Q could possibly improve performance
