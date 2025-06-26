@@ -134,10 +134,10 @@ P_{k+1} = (I - K_{k+1} H_{k+1}) P_{k+1}'
 To follow the given variant of Lemniscate of Gerono
 
 ```math
-\mathbf{p}^g_k(t) =
+\mathbf{p}^g(t) =
 \begin{bmatrix}
-x_k^g \\
-y_k^g
+x_k \\
+y_k
 \end{bmatrix}
 =
 \begin{bmatrix}
@@ -154,20 +154,20 @@ l =
 \end{cases}
 ```
 
-I designed a controller which tracks the rate of curvature of the path $\omega_p$, the velocity of the path $v_p$, and corrects for the tracking errors $x^e$, $y^e$ and $\theta^e$
+I designed a controller which tracks the rate of curvature of the path $\omega^p(t)$, the velocity of the path $v^p(t)$, and corrects for the tracking errors $x^e_k(t)$, $y^e_k(t)$ and $\theta^e_k(t)$. This is also where the time factor of the Lemniscate of Gerono is coupled to the ekf timestep k.
 
 ```math
 \begin{aligned}
-v^{des}_k &= v_p + k_1 * x^e_k \\
-\omega^{des}_k &= \omega_p + k_2 * y^e_k + k_3 * sin(\theta^e_k)
+v^{des}_k &= v^p(t) + k_1 * x^e_k(t) \\
+\omega^{des}_k &= \omega^p(t) + k_2 * y^e_k(t) + k_3 * sin(\theta^e_k(t))
 \end{aligned}
 ```
 
 The position tracking errors are simply
 ```math
 \begin{aligned}
-x^e_k &= x^g_k - x_k\\
-y^e_k &= y^g_k - y_k
+x^e_k(t) &= x^g(t) - x_k\\
+y^e_k(t) &= y^g(t) - y_k
 \end{aligned}
 ```
 
@@ -181,7 +181,7 @@ cos(\theta_k) \\
 sin(\theta_k)
 \end{bmatrix}
 ```
-The forward vector in of the path at time t in global coordinates can be approximated as
+The forward vector in of the path at time t in global coordinates can be approximated as the difference between a small timestep forward and the current timestep. I set $t_{\epsilon}=1^{-4}$ 
 ```math
 \mathbf{p}_k^{g,forward}(t)
 =
@@ -189,5 +189,18 @@ The forward vector in of the path at time t in global coordinates can be approxi
 ```
 Which can be used to estimate the angular tracking error $\theta^e$
 ```math
-\theta^e_k = arctan(\frac{\mathbf{p}_k^{forward}\cdot \mathbf{p}_k^{g, forward}}{det(\mathbf{p}_k^{forward}, \mathbf{p}_k^{g, forward})})
+\theta^e_k(t) = arctan(\frac{\mathbf{p}_k^{forward}\cdot \mathbf{p}_k^{g, forward}(t)}{det(\mathbf{p}_k^{forward}, \mathbf{p}_k^{g, forward}(t))})
 ```
+
+The path velocity I get by taking the distance of the forward path vector divided by $t_{\epsilon}$
+```math
+v^p(t)=
+\frac{|\mathbf{p}_k^{g,forward}(t)|}{t_{\epsilon}}
+```
+And the path angular velocity by calculating the angle between the previous path vector and the current one and diviving by t_{\epsilon}
+```math
+\omega^p(t)=
+arctan(\frac{\mathbf{p}_k^{g,forward}(t-t_{\epsilon}) \cdot \mathbf{p}_k^{g,forward}(t)}{det(\mathbf{p}_k^{g,forward}(t-t_{\epsilon}), \mathbf{p}_k^{g,forward}(t))})/t_{\epsilon}
+```
+
+
