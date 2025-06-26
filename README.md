@@ -301,7 +301,7 @@ The forward vector in of the path at time t in global coordinates can be approxi
 =
 \mathbf{p}^g(t+t_{\epsilon})-\mathbf{p}^g(t)
 ```
-Which can be used to estimate the angular tracking error at time t$\theta^e_k(t)$
+Which can be used to estimate the angular tracking error $\theta^e_k(t)$ at time t 
 ```math
 \theta^e_k(t) = arctan(\frac{\mathbf{p}_k^{forward}\cdot \mathbf{p}_k^{g, forward}(t)}{det(\mathbf{p}_k^{forward}, \mathbf{p}_k^{g, forward}(t))})
 ```
@@ -311,7 +311,7 @@ The path velocity I get by taking the distance of the forward path vector divide
 v^p(t)=
 \frac{|\mathbf{p}_k^{g,forward}(t)|}{t_{\epsilon}}
 ```
-And the path angular velocity by calculating the angle between the previous path vector and the current one and diviving by t_{\epsilon}
+And the path angular velocity by calculating the angle between the previous path vector and the current one and diviving by $t_{\epsilon}$
 ```math
 \omega^p(t)=
 arctan(\frac{\mathbf{p}_k^{g,forward}(t-t_{\epsilon}) \cdot \mathbf{p}_k^{g,forward}(t)}{det(\mathbf{p}_k^{g,forward}(t-t_{\epsilon}), \mathbf{p}_k^{g,forward}(t))})/t_{\epsilon}
