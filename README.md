@@ -41,12 +41,19 @@ Discretized with Euler integration over timestep $\Delta t$, where I get the val
 
 ```math
 x_{k+1}'=f(\mathbf{x}_k, \mathbf{u}_k) =
-\begin{cases}
-x_{k+1} = x_k + v_k \cos(\theta_k) \Delta t \\
-y_{k+1} = y_k + v_k \sin(\theta_k) \Delta t \\
-\theta_{k+1} = \theta_k + \omega^{gyro}_k \Delta t \\
-v_{k+1} = v_k + a_k^{acc} \Delta t
-\end{cases}
+\begin{bmatrix}
+x_{k+1} \\
+y_{k+1} \\
+\theta_{k+1} \\
+v_{k+1}
+\end{bmatrix}
+=
+\begin{bmatrix}
+x_k + v_k \cos(\theta_k) \Delta t \\
+y_k + v_k \sin(\theta_k) \Delta t \\
+\theta_k + \omega^{gyro}_k \Delta t \\
+v_k + a_k^{acc} \Delta t
+\end{bmatrix}
 ```
 
 GPS provides:
@@ -125,6 +132,20 @@ P_{k+1} = (I - K_{k+1} H_{k+1}) P_{k+1}'
 
 ## Controller
 To follow the given variant of Lemniscate of Gerono
+
+```math
+\mathbf{p}_g(t) =
+\begin{bmatrix}
+x_g \\
+y_g
+\end{bmatrix}
+=
+\begin{bmatrix}
+-2\sin l \cos l \\
+\quad 2(\sin l + 1)
+\end{bmatrix}
+```
+Where l is
 ```math
 l = 
 \begin{cases}
@@ -133,17 +154,31 @@ l =
 \end{cases}
 ```
 
-```math
-\begin{split}
-x_g &= -2\sin l \cos l \\
-y_g &=  \quad \: 2(\sin l + 1)
-\end{split}
-```
 I designed a controller which tracks the rate of curvature of the path $\omega_p$, the velocity of the path $v_p$, and corrects for the tracking errors $x_e$, $y_e$ and $\theta_e$
 
 ```math
 \begin{aligned}
-v_{des} &= v_p + k1 * x_e \\
-\omega_{des} &= \omega_p + k2 * y_e + k3 * sin(\theta_e)
+v_{des} &= v_p + k_1 * x_e \\
+\omega_{des} &= \omega_p + k_2 * y_e + k_3 * sin(\theta_e)
 \end{aligned}
+```
+
+The forward vector in global coordinates is
+```math
+\mathbf{p}_k^{forward}
+=
+\begin{bmatrix}
+cos(\theta_k) \\
+sin(\theta_k)
+\end{bmatrix}
+```
+The forward vector in of the path at time t in global coordinates can be approximated as
+```math
+\mathbf{p}_g^{forward}(t)
+=
+\mathbf{p}_g(t+t_{\epsilon})-\mathbf{p}_g(t)
+```
+
+```math
+\theta_e = arctan(\frac{\mathbf{p}_k^{forward}\cdot \mathbf{p}_g^{forward}}{det(\mathbf{p}_k^{forward}, \mathbf{p}_g^{forward})})
 ```
