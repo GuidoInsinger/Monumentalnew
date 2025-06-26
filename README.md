@@ -1,14 +1,13 @@
 ### EKF Equations
 With state vector
-$$
-\mathbf{x}_k = 
+
+$$\mathbf{x}_k = 
 \begin{bmatrix}
 x_k \\
 y_k \\
 \theta_k \\
 v_k
-\end{bmatrix}
-$$
+\end{bmatrix}$$
 
 * $x$: x position
 * $y$: y position
