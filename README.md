@@ -34,7 +34,7 @@ https://github.com/user-attachments/assets/4b7726e6-df3f-48be-8b4b-7380455f19c9
 
 ## Results
 
-My solution seems to track the input path quite well. Sometimes if GPS measurements are far from the predicted position, it takes a second to get back on track but that can be expected from noisy measurements. The score I get is usually around 1-1.5, depending on the specific run.
+My solution seems to track the input path quite well. Sometimes if GPS measurements are far from the predicted position, it takes a second to get back on track but that can be expected from noisy measurements. The score I get is usually around 1-1.5, depending on the specific run. This algorithm should also allow for any arbitrary path to be followed.
 
 ## Approach
 
