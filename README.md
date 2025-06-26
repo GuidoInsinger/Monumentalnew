@@ -1,9 +1,6 @@
 # Differential drive control
 
 
-https://github.com/user-attachments/assets/4b7726e6-df3f-48be-8b4b-7380455f19c9
-
-
 ## Installation
 * First install [uv](https://docs.astral.sh/uv/getting-started/installation/) if you don't have it yet
 * Then clone this repository
@@ -22,6 +19,14 @@ uv sync
 ```
 uv run main.py
 ```
+## Visualization
+In my visualization I built a 3d view that shows all of the important components
+* The purple path is the path to be followed, with a purple arrow indicating the current desired position
+* The yellow dots are the recieved GPS measurements and the yellow arrows coming from the robot are the receieved acceleration vectors (these are sometimes occluded by the robot body)
+* The pink path is the history of the EKF estimate. This path will be a bit jagged due to the GPS corrections coming in
+* On the right you can see the history of the individual states estimated by the EKF 
+
+https://github.com/user-attachments/assets/4b7726e6-df3f-48be-8b4b-7380455f19c9
 
 ## Algorithm
 
