@@ -98,7 +98,7 @@ H_{k+1} =\frac{\partial h}{\partial \mathbf{x}}|_{\mathbf{x}=\mathbf{x}_{k+1}'} 
 
 
 
-#### Prediction Step
+### Prediction Step
 
 ```math
 \mathbf{x}_{k+1}' = f(\hat{\mathbf{x}}_k, \mathbf{u}_k)
@@ -108,7 +108,7 @@ H_{k+1} =\frac{\partial h}{\partial \mathbf{x}}|_{\mathbf{x}=\mathbf{x}_{k+1}'} 
 P_{k+1}' = F_k P_k F_k^\top + Q
 ```
 
-Update Step (if GPS available):
+### Update Step (if GPS available):
 
 ```math 
 \mathbf{\hat{y}}_{k+1} = \mathbf{z}_{k+1} - h(\mathbf{x}_{k+1})
@@ -131,6 +131,7 @@ P_{k+1} = (I - K_{k+1} H_{k+1}) P_{k+1}'
 ```
 
 ## Controller
+
 To follow the given variant of Lemniscate of Gerono
 
 ```math
@@ -187,7 +188,7 @@ The forward vector in of the path at time t in global coordinates can be approxi
 =
 \mathbf{p}^g(t+t_{\epsilon})-\mathbf{p}^g(t)
 ```
-Which can be used to estimate the angular tracking error $\theta^e$
+Which can be used to estimate the angular tracking error at time t$\theta^e_k(t)$
 ```math
 \theta^e_k(t) = arctan(\frac{\mathbf{p}_k^{forward}\cdot \mathbf{p}_k^{g, forward}(t)}{det(\mathbf{p}_k^{forward}, \mathbf{p}_k^{g, forward}(t))})
 ```
