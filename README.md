@@ -37,7 +37,7 @@ To estimate the state of the robot and deal with the asynchronous measurements I
 
 Another reason for why I chose to use inertial measurements in my update step rather than the true inputs is that I found the actuator dynamics to be quite noisy and with no explicit noise model given. Setting up a proper model to track this seemed more complicated than a simple kinematic estimator, the benefit of which seems questionable. 
 
-## EKF equations
+### EKF equations
 
 * $x$: x position
 * $y$: y position
@@ -128,7 +128,7 @@ H_{k+1} =\frac{\partial h}{\partial \mathbf{x}}|_{\mathbf{x}=\mathbf{x}_{k+1}'} 
 ```
 
 
-### Prediction Step
+#### Prediction Step
 
 ```math
 \mathbf{x}_{k+1}' = f(\hat{\mathbf{x}}_k, \mathbf{u}_k)
@@ -138,7 +138,7 @@ H_{k+1} =\frac{\partial h}{\partial \mathbf{x}}|_{\mathbf{x}=\mathbf{x}_{k+1}'} 
 P_{k+1}' = F_k P_k F_k^\top + Q
 ```
 
-### Update Step (if GPS available):
+#### Update Step (if GPS available):
 
 ```math 
 \mathbf{\hat{y}}_{k+1} = \mathbf{z}_{k+1} - h(\mathbf{x}_{k+1})
@@ -195,7 +195,7 @@ R=
 0 & \sigma^2_{y^{GPS}}
 \end{bmatrix}
 ```
-### Initial conditions
+#### Initial conditions
 
 The initial state is as per the assignment
 ```math
@@ -228,7 +228,7 @@ P_0
 \end{bmatrix}
 ```
 
-## Controller
+### Controller
 
 To follow the given variant of Lemniscate of Gerono
 
