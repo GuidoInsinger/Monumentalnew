@@ -44,6 +44,8 @@ Another reason for why I chose to use inertial measurements in my update step ra
 
 ### EKF state estimation
 
+In my EKF I choose the following parameters as my state:
+
 * $x$: x position
 * $y$: y position
 * $\theta$: heading
@@ -58,6 +60,8 @@ y_k \\
 v_k
 \end{bmatrix}
 ```
+
+The inputs to the prediction step are the inertial measurements:
 
 * $a_{k}^{acc}$: forward acceleration reading at time k
 * $\omega^{gyro}_k$: gyroscope reading at time k
@@ -113,6 +117,8 @@ y_{k+1}'
 ```
 
 #### Jacobians
+
+The derivative of the discretized equations of motion is:
 ```math
 F_k =\frac{\partial f}{\partial \mathbf{x}}|_{\mathbf{x}=\mathbf{x}_k}= 
 \begin{bmatrix}
@@ -123,6 +129,7 @@ F_k =\frac{\partial f}{\partial \mathbf{x}}|_{\mathbf{x}=\mathbf{x}_k}=
 \end{bmatrix}
 ```
 
+And the derivative of the measurement function is:
 ```math
 H_{k+1} =\frac{\partial h}{\partial \mathbf{x}}|_{\mathbf{x}=\mathbf{x}_{k+1}'} =
 \begin{bmatrix}
@@ -134,10 +141,12 @@ H_{k+1} =\frac{\partial h}{\partial \mathbf{x}}|_{\mathbf{x}=\mathbf{x}_{k+1}'} 
 
 #### Prediction Step
 
+The prediction step is:
 ```math
 \mathbf{x}_{k+1}' = f(\hat{\mathbf{x}}_k, \mathbf{u}_k)
 ```
 
+With a covariance of:
 ```math 
 P_{k+1}' = F_k P_k F_k^\top + Q
 ```
