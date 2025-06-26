@@ -1,11 +1,27 @@
 # Differential drive control
 
+## Installation
+* first install [uv](https://docs.astral.sh/uv/getting-started/installation/) if you don't have it yet
+```
+git clone
+```
+```
+cd Monumentalnew
+```
+```
+uv sync
+```
+```
+uv run main.py
+```
+
+## Algorithm
+
 To estimate the state of the robot and deal with the asynchronous measurements I chose an EKF. In my EKF I use the inertial measurements as inputs to the prediction step, and the GPS measurements as inputs for the update step. This allows me to run the prediction step whenever a new inertial measurement comes in which I found to be around ~20 hz and an update step to correct the predictions using the GPS measurement at around ~1hz. The uncertainty propagation ensures the EKF covariance will correctly encapsulate the compounded uncertainies from the ~20 prediction steps happening up until the point a GPS measurement comes in. 
 
 Another reason for why I chose to use inertial measurements in my update step rather than the true inputs is that I found the actuator dynamics to be quite noisy and with no explicit noise model given. Setting up a proper model to track this seemed more complicated than a simple kinematic estimator, the benefit of which seems questionable. 
 
-
-## EKF Equations 
+## EKF equations
 
 * $x$: x position
 * $y$: y position
