@@ -9,7 +9,7 @@ from src.websocket_wrapper import WebsocketWrapper
 if __name__ == "__main__":
     # ekf parameters
     state0 = StateVector(*np.array([0.0, 0.0, 0.0, 0.0]))
-    cov0 = 1e-3 * np.diag(
+    cov0 = np.diag(
         [1e-4, 1e-4, 1e-5, 1e-4]
     )  # very small P0 because this is actually certain
 
