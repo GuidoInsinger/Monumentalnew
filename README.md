@@ -1,16 +1,24 @@
 # Differential drive control
 
+
+https://github.com/user-attachments/assets/4b7726e6-df3f-48be-8b4b-7380455f19c9
+
+
 ## Installation
-* first install [uv](https://docs.astral.sh/uv/getting-started/installation/) if you don't have it yet
+* First install [uv](https://docs.astral.sh/uv/getting-started/installation/) if you don't have it yet
+* Then clone this repository
 ```
-git clone
+git clone https://github.com/GuidoInsinger/Monumentalnew.git
 ```
+* Navigate to the folder
 ```
 cd Monumentalnew
 ```
+* Install the dependencies using `uv sync`
 ```
 uv sync
 ```
+* Run the code using `uv run main.py`
 ```
 uv run main.py
 ```
