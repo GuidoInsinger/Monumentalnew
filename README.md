@@ -1,7 +1,9 @@
 # Differential drive control
+
 Welcome to my solution for the Momumental controls assignment!
 
 ## Installation
+
 * First install [uv](https://docs.astral.sh/uv/getting-started/installation/) if you don't have it yet
 * Then clone this repository
 ```
@@ -19,7 +21,9 @@ uv sync
 ```
 uv run main.py
 ```
+
 ## Visualization
+
 In my visualization I built a 3d view that shows all of the important components
 * The purple path is the path to be followed, with a purple arrow indicating the current desired position
 * The yellow dots are the recieved GPS measurements and the yellow arrows coming from the robot are the receieved acceleration vectors (these are sometimes occluded by the robot body)
@@ -29,6 +33,7 @@ In my visualization I built a 3d view that shows all of the important components
 https://github.com/user-attachments/assets/4b7726e6-df3f-48be-8b4b-7380455f19c9
 
 ## Results
+
 My solution seems to track the input path quite well. Sometimes if GPS measurements are far from the predicted position, it takes a second to get back on track but that can be expected from noisy measurements. The score I get is usually around 1-1.5, depending on the specific run.
 
 ## Approach
@@ -65,10 +70,9 @@ a_{k}^{acc} \\
 \end{bmatrix}
 ```
 
-
 This means I ignore the second accelerometer message. This could potentially be useful but I believe it is somewhat redundant information since $a_y=V\omega$ which should, if the rest of the filter does its job, be embedded in the gyroscope measurement and velocities which are updated by the GPS messages
 
-Discretized with Euler integration over timestep $\Delta t$, where I get the value of $\Delta t$ from the arrival time of the message
+Discretized equations of motion with Euler integration over timestep $\Delta t$, where I get the value of $\Delta t$ from the arrival time of the message:
 
 ```math
 x_{k+1}'=f(\mathbf{x}_k, \mathbf{u}_k) =
