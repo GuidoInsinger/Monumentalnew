@@ -177,7 +177,9 @@ To get an estimate of the uncertainties of the sensor data I sent zero input con
 \end{aligned}
 ```
 
-I choose Q such that the variances on $\omega$ and $v$ align with these estimated uncertainties, and I set the position variances to be the same as on the v state. This second part is not necessarily true because the uncertainties on x and y are dependent on the over time integrated error, but seems to work fine.
+I initially chose Q such that the variances on $\omega$ and $v$ align with these estimated uncertainties, and I set the position variances to be the same as on the v state. This second part is not necessarily true because the uncertainties on x and y are dependent on the over time integrated error, but seems to work fine.
+
+After some experimentation I ended up dividing all values of Q by 10 which leads to more stable results, which is probably due to my controller being tuned quite aggresively and performing better when the state estimate doesn't jump around as much.
 
 ```math
 Q=
