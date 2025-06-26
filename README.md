@@ -203,4 +203,12 @@ And the path angular velocity by calculating the angle between the previous path
 arctan(\frac{\mathbf{p}_k^{g,forward}(t-t_{\epsilon}) \cdot \mathbf{p}_k^{g,forward}(t)}{det(\mathbf{p}_k^{g,forward}(t-t_{\epsilon}), \mathbf{p}_k^{g,forward}(t))})/t_{\epsilon}
 ```
 
+The final control inputs that are sent back to the server are computed as follows
+```math
+\begin{aligned}
+v^{left}_k &= v^{des}_k + \omega^{des}_k \frac{L}{2}\\
+v^{right}_k &= v^{des}_k - \omega^{des}_k \frac{L}{2}
+\end{aligned}
+```
+
 
