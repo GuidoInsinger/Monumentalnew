@@ -134,10 +134,10 @@ P_{k+1} = (I - K_{k+1} H_{k+1}) P_{k+1}'
 To follow the given variant of Lemniscate of Gerono
 
 ```math
-\mathbf{p}_g(t) =
+\mathbf{p}^g_k(t) =
 \begin{bmatrix}
-x_g \\
-y_g
+x_k^g \\
+y_k^g
 \end{bmatrix}
 =
 \begin{bmatrix}
@@ -154,16 +154,25 @@ l =
 \end{cases}
 ```
 
-I designed a controller which tracks the rate of curvature of the path $\omega_p$, the velocity of the path $v_p$, and corrects for the tracking errors $x_e$, $y_e$ and $\theta_e$
+I designed a controller which tracks the rate of curvature of the path $\omega_p$, the velocity of the path $v_p$, and corrects for the tracking errors $x^e$, $y^e$ and $\theta^e$
 
 ```math
 \begin{aligned}
-v_{des} &= v_p + k_1 * x_e \\
-\omega_{des} &= \omega_p + k_2 * y_e + k_3 * sin(\theta_e)
+v^{des}_k &= v_p + k_1 * x^e_k \\
+\omega^{des}_k &= \omega_p + k_2 * y^e_k + k_3 * sin(\theta^e_k)
 \end{aligned}
 ```
 
-The forward vector in global coordinates is
+The position tracking errors are simply
+```math
+\begin{aligned}
+x^e_k &= x^g_k - x_k\\
+y^e_k &= y^g_k - y_k
+\end{aligned}
+```
+
+
+Then, to compute the angular tracking error, I first get the forward vector in global coordinates 
 ```math
 \mathbf{p}_k^{forward}
 =
@@ -174,11 +183,11 @@ sin(\theta_k)
 ```
 The forward vector in of the path at time t in global coordinates can be approximated as
 ```math
-\mathbf{p}_g^{forward}(t)
+\mathbf{p}_k^{g,forward}(t)
 =
-\mathbf{p}_g(t+t_{\epsilon})-\mathbf{p}_g(t)
+\mathbf{p}^g(t+t_{\epsilon})-\mathbf{p}^g(t)
 ```
-
+Which can be used to estimate the angular tracking error $\theta^e$
 ```math
-\theta_e = arctan(\frac{\mathbf{p}_k^{forward}\cdot \mathbf{p}_g^{forward}}{det(\mathbf{p}_k^{forward}, \mathbf{p}_g^{forward})})
+\theta^e_k = arctan(\frac{\mathbf{p}_k^{forward}\cdot \mathbf{p}_k^{g, forward}}{det(\mathbf{p}_k^{forward}, \mathbf{p}_k^{g, forward})})
 ```
