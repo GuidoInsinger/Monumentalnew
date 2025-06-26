@@ -37,7 +37,7 @@ To estimate the state of the robot and deal with the asynchronous measurements I
 
 Another reason for why I chose to use inertial measurements in my update step rather than the true inputs is that I found the actuator dynamics to be quite noisy and with no explicit noise model given. Setting up a proper model to track this seemed more complicated than a simple kinematic estimator, the benefit of which seems questionable. 
 
-### EKF equations
+### EKF state estimation
 
 * $x$: x position
 * $y$: y position
@@ -108,7 +108,7 @@ y_{k+1}'
 \end{bmatrix}
 ```
 
-### Jacobians
+#### Jacobians
 ```math
 F_k =\frac{\partial f}{\partial \mathbf{x}}|_{\mathbf{x}=\mathbf{x}_k}= 
 \begin{bmatrix}
@@ -160,7 +160,7 @@ K_{k+1} = P_{k+1}' H_{k+1}^T S_{k+1}^{-1}
 P_{k+1} = (I - K_{k+1} H_{k+1}) P_{k+1}'
 ```
 
-### Q and R
+#### Q and R
 
 To get an estimate of the uncertainties of the sensor data I sent zero input controls to the server for ~60 seconds and calculated the variance in each signal. With this method I found
 
