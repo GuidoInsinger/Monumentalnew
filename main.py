@@ -13,7 +13,7 @@ if __name__ == "__main__":
         [1e-6, 1e-6, 1e-7, 1e-6]
     )  # very small P0 because this is actually certain
 
-    Q = 0.05 * np.diag([4e-3, 4e-3, 4e-3, 4e-3])
+    Q = 0.005 * np.diag([4e-3, 4e-3, 4e-3, 4e-3])
     R = np.diag([0.1, 0.1])
 
     # control parameters
