@@ -133,8 +133,8 @@ And the derivative of the measurement function is:
 ```math
 H_{k+1} =\frac{\partial h}{\partial \mathbf{x}}|_{\mathbf{x}=\mathbf{x}_{k+1}'} =
 \begin{bmatrix}
-1 & 0 & 0 & 0 & 0 \\
-0 & 1 & 0 & 0 & 0
+1 & 0 & 0 & 0  \\
+0 & 1 & 0 & 0
 \end{bmatrix}
 ```
 
