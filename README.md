@@ -239,18 +239,18 @@ To follow the given variant of Lemniscate of Gerono
 ```math
 \mathbf{p}^g(t) =
 \begin{bmatrix}
-x_k \\
-y_k
+x^g_k(t) \\
+y^g_k(t)
 \end{bmatrix}
 =
 \begin{bmatrix}
--2\sin l \cos l \\
-\quad 2(\sin l + 1)
+-2\sin l(t) \cos l(t) \\
+\quad 2(\sin l(t) + 1)
 \end{bmatrix}
 ```
 Where l is
 ```math
-l = 
+l(t) = 
 \begin{cases}
     \frac{\pi *t}{10} - \frac{1}{2}\pi,& \text{if } t < 20\\
     \frac{3}{2}\pi,& \text{otherwise}
