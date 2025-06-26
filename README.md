@@ -192,7 +192,7 @@ After some experimentation I ended up dividing all values of Q by 10 which leads
 
 ```math
 Q=
-\Delta t
+\frac{\Delta t}{10}
 \begin{bmatrix}
 \sigma^2_{a^{acc}} & 0 & 0 & 0 \\
 0 & \sigma^2_{a^{acc}} & 0 & 0\\
