@@ -227,10 +227,10 @@ I simply set the initial covariance to some small values, given that the initial
 P_0
 =
 \begin{bmatrix}
-1^{-4} & 0 & 0 & 0 \\
-0 & 1^{-4} & 0 & 0\\
-0 & 0 & 1^{-5} & 0 \\\
-0 & 0 & 0 & 1^{-4}
+1^{-6} & 0 & 0 & 0 \\
+0 & 1^{-6} & 0 & 0\\
+0 & 0 & 1^{-7} & 0 \\\
+0 & 0 & 0 & 1^{-6}
 \end{bmatrix}
 ```
 
